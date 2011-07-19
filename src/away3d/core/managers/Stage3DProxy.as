@@ -14,8 +14,6 @@ package away3d.core.managers
 	import flash.events.EventDispatcher;
 	import flash.geom.Rectangle;
 
-	import org.osmf.events.BufferEvent;
-
 	use namespace arcane;
 
 	/**
