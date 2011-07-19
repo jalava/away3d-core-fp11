@@ -25,7 +25,7 @@
 	 */
 	public class Mesh extends Entity implements IMaterialOwner, IAsset
 	{
-		private var _subMeshes : Vector.<SubMesh>;
+		protected var _subMeshes : Vector.<SubMesh>;
 		protected var _geometry : Geometry;
 		private var _material : MaterialBase;
 		arcane var _animationState : AnimationStateBase;

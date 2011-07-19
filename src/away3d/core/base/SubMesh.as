@@ -26,7 +26,7 @@ package away3d.core.base
 	{
 		arcane var _material : MaterialBase;
 		private var _parentMesh : Mesh;
-		private var _subGeometry : SubGeometry;
+		protected var _subGeometry : SubGeometry;
 		arcane var _index : uint;
 		private var _uvTransform : Matrix;
 		private var _uvTransformDirty : Boolean;
