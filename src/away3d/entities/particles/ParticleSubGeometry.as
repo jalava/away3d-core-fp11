@@ -35,9 +35,9 @@ package away3d.entities.particles
 		public function ParticleSubGeometry(particlesPerBatch:int)
 		{
 			this._particlesPerBatch = particlesPerBatch;
-			var vertData:Vector.<Number> = Vector.<Number>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-			var uvData:Vector.<Number> = Vector.<Number>([.0, .0, 1.0, .0, 1.0, 1.0, .0, 1.0]);
-			var indexData:Vector.<uint> = Vector.<uint>([0, 1, 2, 0, 2, 3]);
+			var uvData:Vector.<Number>   = Vector.<Number>([.0, .0,		1.0, .0, 	1.0, 1.0,	.0, 1.0]);
+//			var indexData:Vector.<uint> = Vector.<uint>([0, 1, 2, 0, 2, 3]);
+			var indexData:Vector.<uint> = Vector.<uint>([3, 1, 0, 3, 2, 1]);
 			var vertTanData:Vector.<Number> = Vector.<Number>([1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
 			var vertNormalData:Vector.<Number> = Vector.<Number>([.0, .0, -1.0, .0, .0, -1.0, .0, .0, -1.0, .0, .0, -1.0]);
 			var vertCornerData:Vector.<Number> = Vector.<Number>([0,1,2,3]);
@@ -51,6 +51,10 @@ package away3d.entities.particles
 			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*4);
 			var i:int = 0;
 			for(i = 0;i<this._particlesPerBatch;i++) {
+				var x:Number = Math.random()*10-5;
+				var y:Number = Math.random()*10-5;
+				var z:Number = Math.random()*10-5;
+				var vertData:Vector.<Number> = Vector.<Number>([x, y, z,	x, y, z,  	x, y, z, 	x, y, z]);
 				bufferVertData = bufferVertData.concat(vertData);
 				bufferUvData = bufferUvData.concat(uvData);
 				bufferIndexData = bufferIndexData.concat(indexData);

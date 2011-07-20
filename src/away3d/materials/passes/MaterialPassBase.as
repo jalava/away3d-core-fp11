@@ -264,12 +264,14 @@ package away3d.materials.passes
 			var prevUsed : int = _previousUsedStreams[contextIndex];
 			var i : uint;
 			for (i = _numUsedStreams; i < prevUsed; ++i) {
+		//		trace("Cleaning vertex buffer:"+i);
 				stage3DProxy.setSimpleVertexBuffer(i, null);
 			}
 
 			prevUsed = _previousUsedTexs[contextIndex];
 
 			for (i = _numUsedTextures; i < prevUsed; ++i) {
+		//		trace("Clean up tex:"+i);
 				stage3DProxy.setTextureAt(i, null);
 			}
 
@@ -293,6 +295,9 @@ package away3d.materials.passes
 			var index : uint = stage3DProxy._stage3DIndex;
 			_previousUsedStreams[index] = _numUsedStreams;
 			_previousUsedTexs[index] = _numUsedTextures;
+			
+	//		trace("Deactivating, prev used texs: "+MaterialPassBase._previousUsedTexs[index]);
+	//		trace("Deactivating, prev used streams: "+MaterialPassBase._previousUsedStreams[index]);
 
 			if (_animation) _animation.deactivate(stage3DProxy, this);
 		}

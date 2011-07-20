@@ -14,7 +14,7 @@ package away3d.materials
 		private var _particlePass:ParticlePass;
 		
 		private var _particleMap:BitmapData;
-		private var _particleTexture:Texture3DProxy;
+		public var _particleTexture:Texture3DProxy;
 		
 		public function ParticleMaterial(particleMap:BitmapData, blurs:int = 8, sizes:int = 16, max_blur:int = 16) {
 			this._particleMap = particleMap;
