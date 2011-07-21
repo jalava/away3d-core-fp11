@@ -1,5 +1,6 @@
 package away3d.entities.particles
 {
+	import away3d.events.GeometryEvent;
 	import away3d.core.base.SubGeometry;
 	import away3d.core.partition.EntityNode;
 	import away3d.materials.ParticleMaterial;
@@ -49,15 +50,16 @@ package away3d.entities.particles
 			// This handles the emitting of particles, managing of particle positions etc
 			// See particleSubGeometry for handling particle geometries.
 			//super();
-			
-			material = new ParticleMaterial(particle, particleScale);
+			super();	
 			_particleBatches = particleBatches;
 			_particlesPerBatch = particlesPerBatch;
-			_geometry =  new Geometry();
+			//_geometry =  new Geometry();
+			material = new ParticleMaterial(particle, particleScale);
 			for(var i:int = 0;i<_particleBatches;i++) {
 				_geometry.addSubGeometry(new ParticleSubGeometry(_particlesPerBatch));							
 			}
-			initGeometry();			
+			initGeometry();		
+					
 		}
 		
 		
@@ -86,7 +88,12 @@ package away3d.entities.particles
 			if (_geometry.animation) animationState = _geometry.animation.createAnimationState();
 		}
 		
-		public function addParticleSubMesh(subGeometry:SubGeometry) {
+		
+		override protected function onSubGeometryAdded(event : GeometryEvent) : void
+		{
+			addParticleSubMesh(event.subGeometry);
+		}
+		public function addParticleSubMesh(subGeometry:SubGeometry):void {
 			var subMesh : ParticleSubMesh = new ParticleSubMesh(subGeometry, this, null);
 			var len : uint = _subMeshes.length;
 			subMesh._index = len;

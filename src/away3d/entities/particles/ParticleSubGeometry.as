@@ -36,18 +36,21 @@ package away3d.entities.particles
 		public function ParticleSubGeometry(particlesPerBatch:int)
 		{
 			this._particlesPerBatch = particlesPerBatch;
-			var uvData:Vector.<Number>   = Vector.<Number>([.0, .0,		1.0, .0, 	1.0, 1.0,	.0, 1.0]);
-			var vertCornerData:Vector.<Number> = Vector.<Number>([0,1,2,3]);
-			var bufferVertData:Vector.<Number> = new Vector.<Number>();
-			var bufferUvData:Vector.<Number> = new Vector.<Number>();
-			var bufferIndexData:Vector.<uint> = new Vector.<uint>();
-			var bufferCornerIndexData:Vector.<Number> = new Vector.<Number>();
-			_particleData = new Vector.<Number>(_particlesPerBatch*16);
-			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*12);
-			var vertData:Vector.<Number> = Vector.<Number>([0,0,0, 0,0,0, 0,0,0, 0,0,0]);
+		//	var uvData:Vector.<Number>   = Vector.<Number>([.0, .0,		1.0, .0, 	1.0, 1.0,	.0, 1.0]);
+			//var vertCornerData:Vector.<Number> = Vector.<Number>([0,1,2,3]);
+			//var bufferVertData:Vector.<Number> = new Vector.<Number>();
+			//var bufferUvData:Vector.<Number> = new Vector.<Number>();
+			//var bufferIndexData:Vector.<uint> = new Vector.<uint>();
+			//var bufferCornerIndexData:Vector.<Number> = new Vector.<Number>();
+			_particleData = new Vector.<Number>(_particlesPerBatch*16, true);
+			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*12, true);
+			_vertexCornerIndices = new Vector.<Number>(_particlesPerBatch*4, true);
+			//var vertData:Vector.<Number> = Vector.<Number>([0,0,0, 0,0,0, 0,0,0, 0,0,0]);
+			var indexData:Vector.<uint> = new Vector.<uint>(_particlesPerBatch*6, true);
 			var i:int = 0;
-
-			var time:uint = getTimer();
+			var vertData:Vector.<Number> = new Vector.<Number>(_particlesPerBatch*12, true);
+			var uvData:Vector.<Number> = new Vector.<Number>(_particlesPerBatch*8, true);
+			//var time:uint = getTimer();
 			for(i = 0;i<this._particlesPerBatch;i++) {
 			/*	var xspeed:Number = Math.random()*1-.5;
 				var yspeed:Number = Math.random()*1-.5;
@@ -55,14 +58,47 @@ package away3d.entities.particles
 				xspeed/=50;
 				yspeed/=50;
 				zspeed/=1000; */
-				var xspeed:Number = 0;
+			/*	var xspeed:Number = 0;
 				var yspeed:Number = 0;
-				var zspeed:Number = 0;
-				var indexData:Vector.<uint> = Vector.<uint>([i*4+3, i*4+1, i*4+0, i*4+3, i*4+2, i*4+1]);				
-				bufferVertData = bufferVertData.concat(vertData);
-				bufferUvData = bufferUvData.concat(uvData);
-				bufferIndexData = bufferIndexData.concat(indexData);
-				bufferCornerIndexData = bufferCornerIndexData.concat(vertCornerData);
+				var zspeed:Number = 0; */
+				//var indexData:Vector.<uint> = Vector.<uint>([i*4+3, i*4+1, i*4+0, i*4+3, i*4+2, i*4+1]);
+				vertData[i*12+0] = 0;
+				vertData[i*12+0+1] = 0;
+				vertData[i*12+0+2] = 0;
+				vertData[i*12+3] = 0;
+				vertData[i*12+3+1] = 0;
+				vertData[i*12+3+2] = 0;
+				vertData[i*12+6] = 0;
+				vertData[i*12+6+1] = 0;
+				vertData[i*12+6+2] = 0;
+				vertData[i*12+9] = 0;
+				vertData[i*12+9+1] = 0;
+				vertData[i*12+9+2] = 0;		
+
+				uvData[i*8+0] = 0;
+				uvData[i*8+0+1] = 0;
+				uvData[i*8+2] = 1;
+				uvData[i*8+2+1] = 0;
+				uvData[i*8+4] = 1;
+				uvData[i*8+4+1] = 1;
+				uvData[i*8+6] = 0;
+				uvData[i*8+6+1] = 1;
+				
+				indexData[i*6+0] = i*4+3;
+				indexData[i*6+1] = i*4+1;
+				indexData[i*6+2] = i*4+0;
+				indexData[i*6+3] = i*4+3;
+				indexData[i*6+4] = i*4+2;
+				indexData[i*6+5] = i*4+1;				
+				
+				_vertexCornerIndices[i*4+0] = 0;
+				_vertexCornerIndices[i*4+1] = 1;
+				_vertexCornerIndices[i*4+2] = 2;
+				_vertexCornerIndices[i*4+3] = 3;				
+				//bufferVertData = bufferVertData.concat(vertData);
+				//bufferUvData = bufferUvData.concat(uvData);
+				//bufferIndexData = bufferIndexData.concat(indexData);
+				//bufferCornerIndexData = bufferCornerIndexData.concat(vertCornerData);
 				// Time
 				_particleData[i*16] = 0;
 				_particleData[i*16+4] = 0;
@@ -84,23 +120,24 @@ package away3d.entities.particles
 				_particleData[i*16+8+3] = 0;
 				_particleData[i*16+12+3] = 0;
 				
-				_vertexSpeedData[i*12+0] = xspeed;
-				_vertexSpeedData[i*12+0+1] = yspeed;
-				_vertexSpeedData[i*12+0+2] = zspeed;
-				_vertexSpeedData[i*12+3] = xspeed;
-				_vertexSpeedData[i*12+3+1] = yspeed;
-				_vertexSpeedData[i*12+3+2] = zspeed;
-				_vertexSpeedData[i*12+6] = xspeed;
-				_vertexSpeedData[i*12+6+1] = yspeed;
-				_vertexSpeedData[i*12+6+2] = zspeed;
-				_vertexSpeedData[i*12+9] = xspeed;
-				_vertexSpeedData[i*12+9+1] = yspeed;
-				_vertexSpeedData[i*12+9+2] = zspeed;
+				_vertexSpeedData[i*12+0] = 0;
+				_vertexSpeedData[i*12+0+1] = 0;
+				_vertexSpeedData[i*12+0+2] = 0;
+				_vertexSpeedData[i*12+3] = 0;
+				_vertexSpeedData[i*12+3+1] = 0;
+				_vertexSpeedData[i*12+3+2] = 0;
+				_vertexSpeedData[i*12+6] = 0;
+				_vertexSpeedData[i*12+6+1] = 0;
+				_vertexSpeedData[i*12+6+2] = 0;
+				_vertexSpeedData[i*12+9] = 0;
+				_vertexSpeedData[i*12+9+1] = 0;
+				_vertexSpeedData[i*12+9+2] = 0;
 			}
-			_vertexCornerIndices = bufferCornerIndexData;
-			updateVertexData(bufferVertData);
-			updateUVData(bufferUvData);
-			updateIndexData(bufferIndexData);
+		//	_vertexCornerIndices = bufferCornerIndexData;
+			updateVertexData(vertData);
+			updateUVData(uvData);
+			updateIndexData(indexData);
+			invalidateBuffers(_vertexCornerBufferDirty);
 			oldestSpawn = getTimer();
 			spawnIndex = 0;
 			trace("UPDATED!");

@@ -40,14 +40,15 @@
 		public function Mesh(material : MaterialBase = null, geometry : Geometry = null)
 		{
 			super();
+			// This is to prevent overriding geometry if subclass already makes geometry setup
 			_geometry = geometry || new Geometry();
+			_subMeshes = new Vector.<SubMesh>();
+			if (geometry) initGeometry();
+			this.material = material;
 			_geometry.addEventListener(GeometryEvent.BOUNDS_INVALID, onGeometryBoundsInvalid);
 			_geometry.addEventListener(GeometryEvent.SUB_GEOMETRY_ADDED, onSubGeometryAdded);
 			_geometry.addEventListener(GeometryEvent.SUB_GEOMETRY_REMOVED, onSubGeometryRemoved);
 			_geometry.addEventListener(GeometryEvent.ANIMATION_CHANGED, onAnimationChanged);
-			_subMeshes = new Vector.<SubMesh>();
-			this.material = material;
-			if (geometry) initGeometry();
 		}
 		
 		
@@ -217,7 +218,7 @@
 		/**
 		 * Called when a SubGeometry was added to the Geometry.
 		 */
-		private function onSubGeometryAdded(event : GeometryEvent) : void
+		protected function onSubGeometryAdded(event : GeometryEvent) : void
 		{
 			addSubMesh(event.subGeometry);
 		}
