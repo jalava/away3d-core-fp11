@@ -15,11 +15,12 @@ package away3d.materials
 		
 		private var _particleMap:BitmapData;
 		public var _particleTexture:Texture3DProxy;
-		
-		public function ParticleMaterial(particleMap:BitmapData, blurs:int = 8, sizes:int = 16, max_blur:int = 16) {
+		private var _particleScale:Number;
+		public function ParticleMaterial(particleMap:BitmapData, particleScale:Number) {
+			this._particleScale = particleScale;
 			this._particleMap = particleMap;
 			_particleTexture = new Texture3DProxy();
-			addPass(_particlePass = new ParticlePass());			
+			addPass(_particlePass = new ParticlePass(_particleScale));			
 			resetParticleTexture();
 		}
 		

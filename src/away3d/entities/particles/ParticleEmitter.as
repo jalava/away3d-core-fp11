@@ -44,13 +44,13 @@ package away3d.entities.particles
 		private var _rate:Number;		
 		
 
-		public function ParticleEmitter(particle:BitmapData, particleBatches:int = 4, particlesPerBatch:int = 4000)
+		public function ParticleEmitter(particle:BitmapData, particleBatches:int = 4, particlesPerBatch:int = 4000, particleScale:Number = 1)
 		{
 			// This handles the emitting of particles, managing of particle positions etc
 			// See particleSubGeometry for handling particle geometries.
 			//super();
 			
-			material = new ParticleMaterial(particle);
+			material = new ParticleMaterial(particle, particleScale);
 			_particleBatches = particleBatches;
 			_particlesPerBatch = particlesPerBatch;
 			_geometry =  new Geometry();
@@ -62,19 +62,15 @@ package away3d.entities.particles
 		
 		
 		
-		public function addParticlesManual(x:Number, y:Number, z:Number):void
-		{
-			var subGeometry:ParticleSubGeometry = getOldestSubGeometry();
-			subGeometry.spawnParticle(x,y,z);	
-		}
-		
+	
 		private function getOldestSubGeometry():ParticleSubGeometry
 		{
 			var sub:ParticleSubGeometry = _geometry.subGeometries[0] as ParticleSubGeometry ;
 			for(var i:int = 1;i<_particleBatches;i++) {
 				var t:ParticleSubGeometry = (_geometry.subGeometries[i] as ParticleSubGeometry);
 				if(t.oldestSpawn < sub.oldestSpawn) {
-					sub = t; 							
+					sub = t;
+					//trace("Found older:"+i);							
 				}
 			}			
 			return sub;
@@ -95,6 +91,12 @@ package away3d.entities.particles
 			var len : uint = _subMeshes.length;
 			subMesh._index = len;
 			_subMeshes[len] = subMesh;
+		}
+
+		public function spawn(x : Number, y : Number, z : Number, xspeed : Number, yspeed: Number, zspeed: Number, age:Number) : void
+		{
+			var subGeometry:ParticleSubGeometry = getOldestSubGeometry();
+			subGeometry.spawnParticle(x,y,z, xspeed, yspeed, zspeed, age);	
 		}
 
 	}
