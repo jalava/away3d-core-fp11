@@ -25,6 +25,16 @@ package away3d.entities.particles
 		{
 			return (_subGeometry as ParticleSubGeometry).getVertexCornerBuffer(stage3DProxy);
 		}
+
+		public function getSpawnTimeBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
+		{
+			return (_subGeometry as ParticleSubGeometry).getSpawnTimerBuffer(stage3DProxy);
+		}
+
+		public function getSpeedBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
+		{
+			return (_subGeometry as ParticleSubGeometry).getParticleSpeedBuffer(stage3DProxy);
+		}
 		
 	}
 }

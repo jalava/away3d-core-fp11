@@ -1,5 +1,6 @@
 package away3d.materials.passes
 {
+	import flash.utils.getTimer;
 	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DTriangleFace;
@@ -25,6 +26,7 @@ package away3d.materials.passes
 	{
 		protected static const parCornersIdx:uint = 0;
 		protected static const mat:uint = parCornersIdx+4;
+		protected static const time:uint = mat+4;
 
 		
 		public var right:Vector3D = new Vector3D();
@@ -32,7 +34,7 @@ package away3d.materials.passes
 		public var particleTexture:Texture3DProxy;
 		
 		public var cornersData:Vector.<Number> = new Vector.<Number>(16);
-		public var partSizesData:Vector.<Number> = new Vector.<Number>(4);
+		public var timeVector:Vector.<Number> = new Vector.<Number>(4);
 		
 		protected static const ALPHA_KILL:uint = 0;		
 		protected static const ALPHA_KILL_DATA:Vector.<Number> = Vector.<Number>([1,1,1,0.005]);
@@ -45,8 +47,14 @@ package away3d.materials.passes
 			// Expand corners
 			"add op, vt0, vc[va2.x]			\n" +		
 */
-			// Expand corners
-			"add vt0, va0, vc[va2.x]			\n" +		
+			// move by speed´
+			// calculate time delta
+			"sub vt2, vc"+time+".x, va3.x\n"+
+			"mul vt1, va4, vt2.xxxx \n"+
+			"add vt3, vt1.xyz, va0 \n"+
+			// Expand corners			
+/*			"add vt0, vt2, vc[va2.x]			\n" + */
+			"add vt0, vt3, vc[va2.x]			\n" + 		
 			// Offset to place 
 		 	"m44 op, vt0, vc"+mat+"\n" +
 
@@ -85,7 +93,7 @@ package away3d.materials.passes
 			// vc0 - vc3 Particle corners
 			// vc4 - vc7 Matrix 			 
 			// Particle positioning from stream 0 with corner index in stream 3
-			return _vertCode	// Offset to place
+			return _vertCode;	// Offset to place
 		}
 		
 		private var posMat:Matrix3D = new Matrix3D();
@@ -96,20 +104,15 @@ package away3d.materials.passes
 			stage3DProxy.setSimpleVertexBuffer(0, renderable.getVertexBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_3);
 			stage3DProxy.setSimpleVertexBuffer(1, renderable.getUVBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_2);
 			stage3DProxy.setSimpleVertexBuffer(2, (renderable as ParticleSubMesh).getVertexCornerBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_1);
-
-			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, mat, renderable.modelViewProjection, true);
-//			context.setCulling(Context3DTriangleFace.NONE);
-			context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE);
-			context.setDepthTest(false, Context3DCompareMode.LESS_EQUAL);
-			context.setCulling(Context3DTriangleFace.BACK);
-//			context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
-//			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, renderable.modelViewProjection, true);
-		//	trace("Rendering:"+renderable.numTriangles);
-			context.drawTriangles(renderable.getIndexBuffer(stage3DProxy), 0, renderable.numTriangles);
+			stage3DProxy.setSimpleVertexBuffer(3, (renderable as ParticleSubMesh).getSpawnTimeBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_1);
+			stage3DProxy.setSimpleVertexBuffer(4, (renderable as ParticleSubMesh).getSpeedBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_3);
 			
+			context.setBlendFactors(Context3DBlendFactor.SOURCE_ALPHA, Context3DBlendFactor.ONE);
+			context.setDepthTest(false, Context3DCompareMode.LESS_EQUAL);			
+			context.setCulling(Context3DTriangleFace.BACK);
+			context.drawTriangles(renderable.getIndexBuffer(stage3DProxy), 0, renderable.numTriangles);
 			posMat.copyFrom(renderable.sceneTransform);
 			posMat.append(camera.inverseSceneTransform);
-			
 			var rawData:Vector.<Number> = posMat.rawData;
 			
 			var scale:Number = 1.5;
@@ -123,7 +126,10 @@ package away3d.materials.passes
 			cornersData[7] = 1;
 			cornersData[11] = 1;
 			cornersData[15] = 1;
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, parCornersIdx, cornersData, 4);								
+			timeVector[0] = getTimer();
+			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, mat, renderable.modelViewProjection, true);
+			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, parCornersIdx, cornersData, 4);
+			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, time, timeVector , 1);								
 						
 		//	super.render(renderable, stage3DProxy, camera);
 		}

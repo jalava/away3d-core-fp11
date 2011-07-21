@@ -41,8 +41,9 @@ package away3d.entities.particles
 		private var _speedMin:Number;
 		private var _speedMax:Number;
 
-		private var _rate:Number;				
-				
+		private var _rate:Number;		
+		
+
 		public function ParticleEmitter(particle:BitmapData, particleBatches:int = 4, particlesPerBatch:int = 4000)
 		{
 			// This handles the emitting of particles, managing of particle positions etc
@@ -58,6 +59,8 @@ package away3d.entities.particles
 			}
 			initGeometry();			
 		}
+		
+		
 		
 		public function addParticlesManual(x:Number, y:Number, z:Number):void
 		{

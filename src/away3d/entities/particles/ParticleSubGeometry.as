@@ -1,5 +1,6 @@
 package away3d.entities.particles
 {
+	import flash.utils.getTimer;
 	import away3d.core.managers.Stage3DProxy;
 	import flash.display3D.Context3D;
 	import flash.display3D.VertexBuffer3D;
@@ -46,27 +47,43 @@ package away3d.entities.particles
 			var bufferVertTanData:Vector.<Number> = new Vector.<Number>();
 			var bufferVertNormalData:Vector.<Number> = new Vector.<Number>();
 			var bufferCornerIndexData:Vector.<Number> = new Vector.<Number>();
-			_spawnTimers = new Vector.<Number>(_particlesPerBatch);
-			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*4);
+			_spawnTimers = new Vector.<Number>(_particlesPerBatch*4);
+			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*12);
+			var vertData:Vector.<Number> = Vector.<Number>([0,0,0, 0,0,0, 0,0,0, 0,0,0]);
 			var i:int = 0;
+
+			var time:uint = getTimer();
 			for(i = 0;i<this._particlesPerBatch;i++) {
-				var x:Number = Math.random()*40-20;
-				var y:Number = Math.random()*40-20;
-				var z:Number = Math.random()*40-20;
-				var vertData:Vector.<Number> = Vector.<Number>([x, y, z,	x, y, z,  	x, y, z, 	x, y, z]);
-				var indexData:Vector.<uint> = Vector.<uint>([i*4+3, i*4+1, i*4+0, i*4+3, i*4+2, i*4+1]);
-				
+				var xspeed:Number = Math.random()*1-.5;
+				var yspeed:Number = Math.random()*1-.5;
+				var zspeed:Number = Math.random()*1-.5;
+				xspeed/=500;
+				yspeed/=500;
+				zspeed/=10000;
+				var indexData:Vector.<uint> = Vector.<uint>([i*4+3, i*4+1, i*4+0, i*4+3, i*4+2, i*4+1]);				
 				bufferVertData = bufferVertData.concat(vertData);
 				bufferUvData = bufferUvData.concat(uvData);
 				bufferIndexData = bufferIndexData.concat(indexData);
 				bufferVertTanData = bufferVertTanData.concat(vertTanData);
 				bufferVertNormalData = bufferVertNormalData.concat(vertNormalData);
 				bufferCornerIndexData = bufferCornerIndexData.concat(vertCornerData);
-				_spawnTimers[i] = -1;
-				_vertexSpeedData[i*4] = 0;
-				_vertexSpeedData[i*4+1] = 0;
-				_vertexSpeedData[i*4+2] = 0;
-				_vertexSpeedData[i*4+3] = 0;
+				_spawnTimers[i*4] = time;
+				_spawnTimers[i*4+1] = time;
+				_spawnTimers[i*4+2] = time;
+				_spawnTimers[i*4+3] = time;
+				_vertexSpeedData[i*12+0] = xspeed;
+				_vertexSpeedData[i*12+0+1] = yspeed;
+				_vertexSpeedData[i*12+0+2] = zspeed;
+				_vertexSpeedData[i*12+3] = xspeed;
+				_vertexSpeedData[i*12+3+1] = yspeed;
+				_vertexSpeedData[i*12+3+2] = zspeed;
+				_vertexSpeedData[i*12+6] = xspeed;
+				_vertexSpeedData[i*12+6+1] = yspeed;
+				_vertexSpeedData[i*12+6+2] = zspeed;
+				_vertexSpeedData[i*12+9] = xspeed;
+				_vertexSpeedData[i*12+9+1] = yspeed;
+				_vertexSpeedData[i*12+9+2] = zspeed;
+
 			}
 			_vertexCornerIndices = bufferCornerIndexData;
 			updateVertexData(bufferVertData);
@@ -99,7 +116,7 @@ package away3d.entities.particles
 			if (!_listeningForDispose[contextIndex]) initDisposeListener(stage3DProxy);
 
 			if (_vertexSpeedBufferDirty[contextIndex] || !_vertexSpeedBuffers[contextIndex]) {
-				VertexBuffer3D(_vertexSpeedBuffers[contextIndex] ||= stage3DProxy._context3D.createVertexBuffer(_numVertices, 4)).uploadFromVector(_vertexSpeedData, 0, _numVertices);
+				VertexBuffer3D(_vertexSpeedBuffers[contextIndex] ||= stage3DProxy._context3D.createVertexBuffer(_numVertices, 3)).uploadFromVector(_vertexSpeedData, 0, _numVertices);
 				_vertexSpeedBufferDirty[contextIndex] = false;
 			}
 
@@ -123,6 +140,8 @@ package away3d.entities.particles
 		
 		public function spawnParticle(xPos:Number = 0, yPos:Number = 0, zPos:Number = 0, xSpeed:Number = 0, ySpeed:Number = 0, zSpeed:Number = 0):void
 		{
+			
+			invalidateBuffers(_vertexBufferDirty);
 			invalidateBuffers(_spawnTimersDirty);
 			invalidateBuffers(_vertexSpeedBufferDirty);
 			
