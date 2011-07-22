@@ -58,12 +58,9 @@ package away3d.entities.particles
 			for(var i:int = 0;i<_particleBatches;i++) {
 				_geometry.addSubGeometry(new ParticleSubGeometry(_particlesPerBatch));							
 			}
-			initGeometry();		
+			//initGeometry();		
 					
 		}
-		
-		
-		
 	
 		private function getOldestSubGeometry():ParticleSubGeometry
 		{
@@ -78,7 +75,7 @@ package away3d.entities.particles
 			return sub;
 		}
 
-		override protected function initGeometry() : void
+	/*	override protected function initGeometry() : void
 		{
 			var subGeoms : Vector.<SubGeometry> = _geometry.subGeometries;
 
@@ -87,7 +84,7 @@ package away3d.entities.particles
 
 			if (_geometry.animation) animationState = _geometry.animation.createAnimationState();
 		}
-		
+*/		
 		
 		override protected function onSubGeometryAdded(event : GeometryEvent) : void
 		{

@@ -44,10 +44,10 @@ package away3d.entities.particles
 			//var bufferCornerIndexData:Vector.<Number> = new Vector.<Number>();
 			_particleData = new Vector.<Number>(_particlesPerBatch*16, true);
 			_vertexSpeedData = new Vector.<Number>(_particlesPerBatch*12, true);
-			_vertexCornerIndices = new Vector.<Number>(_particlesPerBatch*4, true);
 			//var vertData:Vector.<Number> = Vector.<Number>([0,0,0, 0,0,0, 0,0,0, 0,0,0]);
-			var indexData:Vector.<uint> = new Vector.<uint>(_particlesPerBatch*6, true);
 			var i:int = 0;
+			_vertexCornerIndices = new Vector.<Number>(_particlesPerBatch*4, true);
+			var indexData:Vector.<uint> = new Vector.<uint>(_particlesPerBatch*6, true);
 			var vertData:Vector.<Number> = new Vector.<Number>(_particlesPerBatch*12, true);
 			var uvData:Vector.<Number> = new Vector.<Number>(_particlesPerBatch*8, true);
 			//var time:uint = getTimer();
