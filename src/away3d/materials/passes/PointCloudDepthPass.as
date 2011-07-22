@@ -23,7 +23,7 @@ package away3d.materials.passes
 	/**
 	 * @author jalava
 	 */
-	public class PointCloudPass extends MaterialPassBase
+	public class PointCloudDepthPass extends MaterialPassBase
 	{
 		protected static const parCornersIdx:uint = 0;
 		protected static const mat:uint = parCornersIdx+4;
@@ -55,29 +55,23 @@ package away3d.materials.passes
 			//"mul vt0.xyz, vt0.xyz va3.xxx \n"+  
 			//"add vt0, va0, vt1			\n" +
 			// Offset to place 
-		 	"m44 op, vt0, vc"+mat+"\n" +
-			
-			// Texture UV 
-			"mov v1, va1			  \n"+
-			// Color
-			"mov v2, vc"+ONE+"\n"+
-			"mov v2.xyz, vt2.yzw \n"+
-		//	"mov v2, vt1 \n"+ 
+		 	"m44 vt0, vt0, vc"+mat+"\n" +
+			"mov op, vt0 \n"+
+			"mov v0, vt0 \n"+
 			"";
 			
 		// TODO: Particle fog
-		private var _fragCode:String = "mov ft0, v1\n"+			
-			"tex ft1, ft0, fs0 <2d,linear,clamp>\n"+
-			"mul ft1.xyz, ft1.xyz, v2.xyz \n"+
-		//	"mul ft1.w, ft1.w, v2.x \n"+
-			"mov oc, ft1\n";
-
+		private var _fragCode:String = 	
+					"div ft2, v0, v0.w		\n" +
+					"mul ft0, fc0, ft2.z	\n" +
+					"frc ft0, ft0			\n" +
+					"mul ft1, ft0.yzww, fc1	\n" +
+					"sub oc, ft0, ft1		\n";
 		public var dir:uint = 0;
 
-		public function PointCloudPass(partScale:Number) {
+		public function PointCloudDepthPass(partScale:Number) {
 			super();
 			_numUsedStreams = 3;
-			_numUsedTextures = 1;
 			_numUsedVertexConstants = 8;
 			cornersData[3] = 1;
 			cornersData[7] = 1;
@@ -107,31 +101,27 @@ package away3d.materials.passes
 		
 		private var posMat:Matrix3D = new Matrix3D();
 		private var direction:Vector3D = new Vector3D();
-		private var lastDir:int = -1;
+		private var lastDir:uint = -1;
 		private var sinValData:Vector.<Number> = new Vector.<Number>(4);
 		override arcane function render(renderable : IRenderable, stage3DProxy : Stage3DProxy, camera : Camera3D) : void
 		{		
 			var pointCloud:PointCloudSubMesh = renderable as PointCloudSubMesh;
 			var context : Context3D = stage3DProxy._context3D;
 			stage3DProxy.setSimpleVertexBuffer(0, renderable.getVertexBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_3);
-			stage3DProxy.setSimpleVertexBuffer(1, renderable.getUVBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_2);
 			stage3DProxy.setSimpleVertexBuffer(2, pointCloud.getVertexCornerBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_1);
-			stage3DProxy.setSimpleVertexBuffer(3, pointCloud.getParticleDataBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_4);
-			
-			context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA);
+			stage3DProxy.setSimpleVertexBuffer(3, pointCloud.getParticleDataBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_4);			
+			context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ONE);
 			context.setDepthTest(true, Context3DCompareMode.LESS_EQUAL);			
 			context.setCulling(Context3DTriangleFace.BACK);
 			this.direction.copyFrom(camera.scenePosition);
 			//pointCloud.parentMesh.			
 			this.direction = pointCloud.inverseSceneTransform.transformVector(this.direction);
 			this.direction.normalize();
-			
-			//var dir:uint = calcOrder(direction);
-			var dir:uint = this.dir; 
+			var dir:uint = calcOrder(direction); 
 			posMat.copyFrom(renderable.sceneTransform);
 			posMat.append(camera.inverseSceneTransform);
 			var rawData:Vector.<Number> = posMat.rawData;
-	
+			var direction = camera.position;
 			var scale:Number = _partScale;
 			right.x = rawData[0]*scale; right.y = rawData[4]*scale; right.z = rawData[8]*scale;
 			up.x = rawData[1]*scale; up.y = rawData[5]*scale; up.z = rawData[9]*scale;
@@ -151,7 +141,6 @@ package away3d.materials.passes
 			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, parCornersIdx, cornersData, 4);										
 			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, ZERO, ZERO_DATA, 1);								
 			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, ONE, ONE_DATA, 1);								
-			context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, sinVal, sinValData, 1);
 			context.drawTriangles(pointCloud.getDirIndexBuffer(stage3DProxy,dir), 0, renderable.numTriangles);
 		}
 		
@@ -195,8 +184,7 @@ package away3d.materials.passes
 		{
 		//	trace("Particle Activate");
 			super.activate(stage3DProxy, camera);
-
-			stage3DProxy.setTextureAt(0, particleTexture.getTextureForStage3D(stage3DProxy));
+			stage3DProxy._context3D.setProgramConstantsFromVector(Context3DProgramType.FRAGMENT, 0, _enc, 2);
 		}
 
 		override arcane function deactivate(stage3DProxy : Stage3DProxy) : void

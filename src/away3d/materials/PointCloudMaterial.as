@@ -1,9 +1,16 @@
 package away3d.materials
 {
+	import away3d.materials.passes.PointCloudDepthPass;
+	import away3d.core.base.IRenderable;
+	import away3d.core.managers.Stage3DProxy;
+	import away3d.cameras.Camera3D;
+	import away3d.arcane;
 	import flash.geom.Matrix;
 	import away3d.materials.passes.PointCloudPass;
 	import away3d.core.managers.Texture3DProxy;
 	import flash.display.BitmapData;
+	
+	use namespace arcane;
 	/**
 	 * @author jalava
 	 */
@@ -18,7 +25,9 @@ package away3d.materials
 			this._particleScale = particleScale;
 			this._particleMap = particleMap;
 			_particleTexture = new Texture3DProxy();
-			addPass(_particlePass = new PointCloudPass(_particleScale));			
+			addPass(_particlePass = new PointCloudPass(_particleScale));
+			_depthPass = new PointCloudDepthPass(_particleScale);
+			_depthPass.invalidateShaderProgram();			
 			resetParticleTexture();
 		}
 		
@@ -43,6 +52,8 @@ package away3d.materials
 			_particleTexture.bitmapData = targetBitmap;
 			_particlePass.particleTexture = _particleTexture;
 		}
+		
+		
 
 		override public function dispose(deep : Boolean) : void
 		{

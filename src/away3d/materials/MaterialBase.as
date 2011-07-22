@@ -65,7 +65,7 @@ package away3d.materials
 		private var _lights : Array;
 
 		private var _mipmapBitmap : BitmapData;
-		private var _depthPass : DepthMapPass;
+		protected var _depthPass : MaterialPassBase;
 
 		/**
 		 * Creates a new MaterialBase object.

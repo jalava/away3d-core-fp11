@@ -14,10 +14,10 @@ package away3d.entities.particles
 	 */
 	public class PointCloudSubGeometry extends SubGeometry
 	{
-		private var _dirindices:Vector.<Vector.<uint>>= new Vector.<Vector.<uint>>(48);
+		private var _dirindices:Vector.<Vector.<uint>>= new Vector.<Vector.<uint>>(48, true);
 		private var _size:uint;
 				
-		public function PointCloudSubGeometry(size : uint, scale : Number)
+		public function PointCloudSubGeometry(totalSize:uint, size : uint, scale : Number, pointCloudData:Vector.<Number>, offsetx:int=0, offsety:int=0, offsetz:int = 0)
 		{
 			this._size = size;
 			_vertexCornerIndices = new Vector.<Number>(size*size*size*4, true);
@@ -25,23 +25,23 @@ package away3d.entities.particles
 			var vertData:Vector.<Number> = new Vector.<Number>(size*size*size*12, true);
 			var uvData:Vector.<Number> = new Vector.<Number>(size*size*size*8, true);
 			for(var i=0;i<48;i++) {
-				_dirindices[i] = new Vector.<uint>(size*size*size*6);
+				_dirindices[i] = new Vector.<uint>(size*size*size*6, true);
 			}
 
 			var x:uint = 0;
 			var y:uint = 0;
 			var z:uint = 0;
-			var hsize:int = size/2;
-			var offset:int = -hsize*scale;
+		
+			var offset:int = -totalSize/2*scale;
 			for(x=0;x<size;x++) {
 				for(y=0;y<size;y++) {
 					for(z=0;z<size;z++) {
 						var idx:uint = x*size*size+y*size+z;
 						var pos:uint = idx*12;
 						// Vertex positioning
-						vertData[pos] = vertData[pos+3] = vertData[pos+6] = vertData[pos+9] = offset+x*scale;
-						vertData[pos+1] = vertData[pos+4] = vertData[pos+7] = vertData[pos+10] = offset+y*scale;
-						vertData[pos+2] = vertData[pos+5] = vertData[pos+8] = vertData[pos+11] = offset+z*scale;
+						vertData[pos] = vertData[pos+3] = vertData[pos+6] = vertData[pos+9] = offset+(x+offsetx)*scale;
+						vertData[pos+1] = vertData[pos+4] = vertData[pos+7] = vertData[pos+10] = offset+(y+offsety)*scale;
+						vertData[pos+2] = vertData[pos+5] = vertData[pos+8] = vertData[pos+11] = offset+(z+offsetz)*scale;
 						pos = idx*8;						
 						uvData[pos+0] = 0; uvData[pos+0+1] = 0;
 						uvData[pos+2] = 1; uvData[pos+2+1] = 0;
@@ -53,10 +53,10 @@ package away3d.entities.particles
 						_vertexCornerIndices[pos+2] = 2;
 						_vertexCornerIndices[pos+3] = 3;
 						pos = idx*16;
-						particleData[pos] = particleData[pos+4] = particleData[pos+8] = particleData[pos+12] = x/size;
-						particleData[pos+1] = particleData[pos+5] = particleData[pos+9] = particleData[pos+13] = y/size;
-						particleData[pos+2] = particleData[pos+6] = particleData[pos+10] = particleData[pos+14] = z/size;
-						particleData[pos+3] = particleData[pos+7] = particleData[pos+11] = particleData[pos+15] = 1;
+						particleData[pos] = particleData[pos+4] = particleData[pos+8] = particleData[pos+12] = pointCloudData[idx*4];
+						particleData[pos+1] = particleData[pos+5] = particleData[pos+9] = particleData[pos+13] = pointCloudData[idx*4+1];
+						particleData[pos+2] = particleData[pos+6] = particleData[pos+10] = particleData[pos+14] = pointCloudData[idx*4+2];
+						particleData[pos+3] = particleData[pos+7] = particleData[pos+11] = particleData[pos+15] = pointCloudData[idx*4+3];
 						
 						addIndices(x,y,z, idx);								
 					}
@@ -102,8 +102,7 @@ package away3d.entities.particles
 			var xo:uint = 0;
 			var yo:uint = 2;
 			var zo:uint = 4;
-			
-			
+						
 			pushIndices2(0, xo, yo, zo, idx);
 			pushIndices2(8, xo, zo, yo, idx);
 			pushIndices2(16, yo, xo, zo, idx);
@@ -113,18 +112,19 @@ package away3d.entities.particles
 		}
 		
 		private function pushIndices2(idxoffset:uint, a:uint,b:uint,c:uint, idx:uint):void {
-			pushIndices(idxoffset++, offsets[a]+offsets[b]+offsets[c], idx);
-			pushIndices(idxoffset++, offsets[a]+offsets[b]+offsets[c+1], idx);
-			pushIndices(idxoffset++, offsets[a]+offsets[b+1]+offsets[c], idx);
-			pushIndices(idxoffset++, offsets[a]+offsets[b+1]+offsets[c+1], idx);
-			pushIndices(idxoffset++, offsets[a+1]+offsets[b]+offsets[c], idx);
-			pushIndices(idxoffset++, offsets[a+1]+offsets[b]+offsets[c+1], idx);
-			pushIndices(idxoffset++, offsets[a+1]+offsets[b+1]+offsets[c], idx);
-			pushIndices(idxoffset, offsets[a+1]+offsets[b+1]+offsets[c+1], idx);
+			pushIndices(idxoffset++, offsets[a]  +offsets[b]  +offsets[c]  , idx);     // +a, +b, +c
+			pushIndices(idxoffset++, offsets[a]  +offsets[b]  +offsets[c+1], idx);   // +a, +b, -c
+			pushIndices(idxoffset++, offsets[a]  +offsets[b+1]+offsets[c]  , idx);   // +a, -b, +c
+			pushIndices(idxoffset++, offsets[a]  +offsets[b+1]+offsets[c+1], idx); // +a, -b, -c
+			pushIndices(idxoffset++, offsets[a+1]+offsets[b]  +offsets[c]  , idx); 	 // -a, +b, +c
+			pushIndices(idxoffset++, offsets[a+1]+offsets[b]  +offsets[c+1], idx); // -a, +b, -c
+			pushIndices(idxoffset++, offsets[a+1]+offsets[b+1]+offsets[c]  , idx); // -a, -b, +c
+			pushIndices(idxoffset,   offsets[a+1]+offsets[b+1]+offsets[c+1], idx); // -a, -b, -c
 		}
 		
 		private function pushIndices(dir:uint, idx:uint, partIdx:uint):void {
 			
+		//	trace("Push:"+partIdx+" to "+idx);
 			_dirindices[dir][idx*6] = partIdx*4+3;
 			_dirindices[dir][idx*6+1] = partIdx*4+1;
 			_dirindices[dir][idx*6+2] = partIdx*4+0;
