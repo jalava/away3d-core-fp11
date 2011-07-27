@@ -47,29 +47,26 @@ package away3d.materials.passes
 		private var _enc : Vector.<Number>;
 		
 		private var _vertCode:String =
-			// Get sin offsets
+			// Get corner offsets
 			"mov vt1, vc[va2.x] \n"+
+			// Scale the particle corners from particle size in va3.x
 			"sat vt2, va3 \n"+
-			"mul vt1.xyz, vt1.xyz, vt2.xxx \n"+			
+			"mul vt1.xyz, vt1.xyz, vt2.xxx \n"+					
 			"add vt0, va0, vt1			\n" +
-			//"mul vt0.xyz, vt0.xyz va3.xxx \n"+  
-			//"add vt0, va0, vt1			\n" +
 			// Offset to place 
-		 	"m44 op, vt0, vc"+mat+"\n" +
-			
+		 	"m44 op, vt0, vc"+mat+"\n" +			
 			// Texture UV 
 			"mov v1, va1			  \n"+
 			// Color
 			"mov v2, vc"+ONE+"\n"+
 			"mov v2.xyz, vt2.yzw \n"+
-		//	"mov v2, vt1 \n"+ 
 			"";
 			
-		// TODO: Particle fog
+
 		private var _fragCode:String = "mov ft0, v1\n"+			
 			"tex ft1, ft0, fs0 <2d,linear,clamp>\n"+
+			// Color
 			"mul ft1.xyz, ft1.xyz, v2.xyz \n"+
-		//	"mul ft1.w, ft1.w, v2.x \n"+
 			"mov oc, ft1\n";
 
 		public var dir:uint = 0;

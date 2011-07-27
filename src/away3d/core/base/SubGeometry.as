@@ -1,5 +1,7 @@
 package away3d.core.base
 {
+	import flash.geom.Vector3D;
+	import flash.geom.Matrix3D;
 	import away3d.animators.data.AnimationBase;
 	import away3d.arcane;
 	import away3d.core.managers.Stage3DProxy;
@@ -67,6 +69,8 @@ package away3d.core.base
 		protected var _numVertices : uint;
 		protected var _numIndices : uint;
 		protected var _numTriangles : uint;
+		
+		private var _helperMatrix:Matrix3D;
 
 		/**
 		 * Creates a new SubGeometry object.
@@ -278,7 +282,7 @@ package away3d.core.base
 			var clone : SubGeometry = new SubGeometry();
 			clone.updateVertexData(_vertices.concat());
 			clone.updateUVData(_uvs.concat());
-			clone.updateSecondaryUVData(_secondaryUvs.concat());
+			if(_secondaryUvs) clone.updateSecondaryUVData(_secondaryUvs.concat());
 			clone.updateIndexData(_indices.concat());
 			if (!_autoDeriveVertexNormals) clone.updateVertexNormalData(_vertexNormals.concat());
 			if (!_autoDeriveVertexTangents) clone.updateVertexTangentData(_vertexTangents.concat());
@@ -526,6 +530,24 @@ package away3d.core.base
 					buffers[i] = null;
 				}
 			}
+		}
+		
+		public function vertexTranslateScale(offsetX:Number=0, offsetY:Number=0, offsetZ:Number=0,scaleX:Number=0, scaleY:Number=0, scaleZ:Number=0):void {
+			if(!_helperMatrix) _helperMatrix = new Matrix3D();
+			_helperMatrix.identity();
+			_helperMatrix.appendTranslation(offsetX, offsetY, offsetZ);
+			_helperMatrix.appendScale(scaleX, scaleY, scaleZ);
+			_helperMatrix.transformVectors(_vertices, _vertices);
+			invalidateBuffers(_vertexBufferDirty);
+		}
+		
+		public function vertexRotate(rotateX:Number, rotateY:Number, rotateZ:Number, pivotX:Number = 0, pivotY:Number = 0, pivotZ:Number = 0):void {
+			if(!_helperMatrix) _helperMatrix = new Matrix3D();
+			_helperMatrix.appendRotation(rotateX, Vector3D.X_AXIS);
+			_helperMatrix.appendRotation(rotateY, Vector3D.Y_AXIS);
+			_helperMatrix.appendRotation(rotateZ, Vector3D.Z_AXIS);
+			_helperMatrix.transformVectors(_vertices, _vertices);
+			invalidateBuffers(_vertexBufferDirty);			
 		}
 
 		/**
