@@ -110,10 +110,10 @@ package away3d.entities.particles
 				_particleData[i*16+8+1] = 1;
 				_particleData[i*16+12+1] = 1;
 				// Start Alpha
-				_particleData[i*16+0+2] = 4;
-				_particleData[i*16+4+2] = 4;
-				_particleData[i*16+8+2] = 4;
-				_particleData[i*16+12+2] = 4;
+				_particleData[i*16+0+2] = 16;
+				_particleData[i*16+4+2] = 16;
+				_particleData[i*16+8+2] = 16;
+				_particleData[i*16+12+2] = 16;
 				// End Alpha
 				_particleData[i*16+0+3] = 0;
 				_particleData[i*16+4+3] = 0;

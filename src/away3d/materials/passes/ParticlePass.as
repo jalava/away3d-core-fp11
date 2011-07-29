@@ -94,9 +94,9 @@ package away3d.materials.passes
 		public function ParticlePass(partScale:Number) {
 
 			super();
-			_numUsedStreams = 3;
+			_numUsedStreams = 5;
 			_numUsedTextures = 1;
-			_numUsedVertexConstants = 8;
+			_numUsedVertexConstants = 11;
 			cornersData[3] = 1;
 			cornersData[7] = 1;
 			cornersData[11] = 1;
