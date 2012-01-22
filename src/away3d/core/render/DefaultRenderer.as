@@ -26,9 +26,9 @@ package away3d.core.render
 		 * @param antiAlias The amount of anti-aliasing to use.
 		 * @param renderMode The render mode to use.
 		 */
-		public function DefaultRenderer(antiAlias : uint = 0, renderMode : String = "auto")
+		public function DefaultRenderer()
 		{
-			super(antiAlias, true, renderMode);
+			super();
 		}
 
 
@@ -49,10 +49,6 @@ package away3d.core.render
 
 			_context.setDepthTest(false, Context3DCompareMode.LESS);
 
-//			for (var i : int = 0; i < 8; ++i) {
-//				_stage3DProxy.setTextureAt(i,  null);
-//			}
-
 			if (entityCollector.skyBox) {
 				if (_activeMaterial) _activeMaterial.deactivate(_stage3DProxy);
 				_activeMaterial = null;
@@ -62,6 +58,7 @@ package away3d.core.render
 			drawRenderables(entityCollector.blendedRenderableHead, entityCollector);
 
 			if (_activeMaterial) _activeMaterial.deactivate(_stage3DProxy);
+
 			_activeMaterial = null;
 		}
 
@@ -92,7 +89,6 @@ package away3d.core.render
 			var camera : Camera3D = entityCollector.camera;
 			var item2 : RenderableListItem;
 
-			// todo: is a rendercommand way possible, respecting pass order, but allowing passes with same Program3D to be chained?
 			while (item) {
 				_activeMaterial = item.renderable.material;
 				_activeMaterial.updateMaterial(_context);
@@ -109,6 +105,7 @@ package away3d.core.render
 						item2 = item2.next;
 					} while (item2 && item2.renderable.material == _activeMaterial);
 					_activeMaterial.deactivatePass(j, _stage3DProxy);
+
 				} while (++j < numPasses);
 
 				item = item2;

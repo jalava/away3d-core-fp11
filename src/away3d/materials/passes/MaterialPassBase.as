@@ -4,7 +4,6 @@ package away3d.materials.passes
 	import away3d.arcane;
 	import away3d.cameras.Camera3D;
 	import away3d.core.base.IRenderable;
-	import away3d.core.base.SubGeometry;
 	import away3d.core.managers.AGALProgram3DCache;
 	import away3d.core.managers.Stage3DProxy;
 	import away3d.errors.AbstractMethodError;
@@ -17,9 +16,10 @@ package away3d.materials.passes
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.Program3D;
-	import flash.display3D.VertexBuffer3D;
+	import flash.display3D.textures.TextureBase;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
 
 	use namespace arcane;
 
@@ -57,13 +57,20 @@ package away3d.materials.passes
 		// keep track of previously rendered usage for faster cleanup of old vertex buffer streams and textures
 		private static var _previousUsedStreams : Vector.<int> = Vector.<int>([0, 0, 0, 0, 0, 0, 0, 0]);
 		private static var _previousUsedTexs : Vector.<int> = Vector.<int>([0, 0, 0, 0, 0, 0, 0, 0]);
+		protected var _defaultCulling : String = Context3DTriangleFace.BACK;
 
+		private var _renderToTexture : Boolean;
+		private var _oldTarget : TextureBase;
+		private var _oldSurface : int;
+		private var _oldDepthStencil : Boolean;
+		private var _oldRect : Rectangle;
 
 		/**
 		 * Creates a new MaterialPassBase object.
 		 */
-		public function MaterialPassBase()
+		public function MaterialPassBase(renderToTexture : Boolean = false)
 		{
+			_renderToTexture = renderToTexture;
 			_numUsedStreams = 1;
 			_numUsedVertexConstants = 4;
 		}
@@ -198,7 +205,6 @@ package away3d.materials.passes
 		{
 			var context : Context3D = stage3DProxy._context3D;
 
-			context.setCulling(_bothSides? Context3DTriangleFace.NONE : Context3DTriangleFace.BACK);
 			context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, renderable.modelViewProjection, true);
 
 			stage3DProxy.setSimpleVertexBuffer(0, renderable.getVertexBuffer(stage3DProxy), Context3DVertexBufferFormat.FLOAT_3);
@@ -250,15 +256,14 @@ package away3d.materials.passes
 		arcane function activate(stage3DProxy : Stage3DProxy, camera : Camera3D) : void
 		{
 			var contextIndex : int = stage3DProxy._stage3DIndex;
-			var context : Context3D = stage3DProxy._context3D;
 
-			if (!_program3Ds[contextIndex]) {
-				initPass(stage3DProxy);
-			}
+//			if (!_program3Ds[contextIndex]) {
+//				initPass(stage3DProxy);
+//			}
 
-			if (_programInvalids[contextIndex]) {
+			if (_programInvalids[contextIndex] || !_program3Ds[contextIndex]) {
 				updateProgram(stage3DProxy);
-				_programInvalids[contextIndex] = false;
+				dispatchEvent(new Event(Event.CHANGE));
 			}
 
 			var prevUsed : int = _previousUsedStreams[contextIndex];
@@ -275,11 +280,17 @@ package away3d.materials.passes
 				stage3DProxy.setTextureAt(i, null);
 			}
 
-			// todo: do same for textures
-
 			_animation.activate(stage3DProxy, this);
 			stage3DProxy.setProgram(_program3Ds[contextIndex]);
-			dispatchEvent(new Event(Event.CHANGE));
+
+			stage3DProxy._context3D.setCulling(_bothSides? Context3DTriangleFace.NONE : _defaultCulling);
+
+			if (_renderToTexture) {
+				_oldTarget = stage3DProxy.renderTarget;
+				_oldSurface = stage3DProxy.renderSurfaceSelector;
+				_oldDepthStencil = stage3DProxy.enableDepthAndStencil;
+				_oldRect = stage3DProxy.scissorRect;
+			}
 		}
 
 		/**
@@ -300,6 +311,12 @@ package away3d.materials.passes
 	//		trace("Deactivating, prev used streams: "+MaterialPassBase._previousUsedStreams[index]);
 
 			if (_animation) _animation.deactivate(stage3DProxy, this);
+
+			if (_renderToTexture) {
+				// kindly restore state
+				stage3DProxy.setRenderTarget(_oldTarget, _oldDepthStencil, _oldSurface);
+				stage3DProxy.scissorRect = _oldRect;
+			}
 		}
 
 		/**
@@ -313,23 +330,12 @@ package away3d.materials.passes
 
 		/**
 		 * Compiles the shader program.
-		 * @param context The context for which to compile the shader program.
 		 * @param polyOffsetReg An optional register that contains an amount by which to inflate the model (used in single object depth map rendering).
 		 */
-		protected function  updateProgram(stage3DProxy : Stage3DProxy, polyOffsetReg : String = null) : void
+		arcane function updateProgram(stage3DProxy : Stage3DProxy, polyOffsetReg : String = null) : void
 		{
 			AGALProgram3DCache.getInstance(stage3DProxy).setProgram3D(this, _animation, polyOffsetReg);
-		}
-
-		/**
-		 * Initializes the shader program object.
-		 * @param context
-		 */
-		protected function initPass(stage3DProxy : Stage3DProxy) : void
-		{
-			var contextIndex : int = stage3DProxy._stage3DIndex;
-			_program3Ds[contextIndex] = stage3DProxy._context3D.createProgram();
-			_programInvalids[contextIndex] = true;
+			_programInvalids[stage3DProxy.stage3DIndex] = false;
 		}
 
 		public function get lights() : Vector.<LightBase>

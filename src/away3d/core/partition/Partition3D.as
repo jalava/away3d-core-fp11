@@ -1,7 +1,9 @@
 package away3d.core.partition
 {
 	import away3d.arcane;
+	import away3d.core.traverse.EntityCollector;
 	import away3d.core.traverse.PartitionTraverser;
+	import away3d.core.traverse.ShadowCasterCollector;
 	import away3d.entities.Entity;
 
 	use namespace arcane;
@@ -44,7 +46,9 @@ package away3d.core.partition
 		 */
 		public function traverse(traverser : PartitionTraverser) : void
 		{
-			if (_updatesMade) updateEntities();
+			if (_updatesMade && traverser is EntityCollector && !(traverser is ShadowCasterCollector))
+				updateEntities();
+			
 			_rootNode.acceptTraverser(traverser);
 		}
 
@@ -61,11 +65,14 @@ package away3d.core.partition
 
 			// if already marked for update
 			while (t) {
-				if (node == t) return;
+				if (node == t)
+					return;
+				
 				t = t._updateQueueNext;
 			}
-
+			
 			node._updateQueueNext = _updateQueue;
+			
 			_updateQueue = node;
 			_updatesMade = true;
 		}
@@ -78,9 +85,9 @@ package away3d.core.partition
 		{
 			var node : EntityNode = entity.getEntityPartitionNode();
 			var t : EntityNode;
-
+			
 			node.removeFromParent();
-
+			
 			// remove from update list if it's in
 			if (node == _updateQueue)
 				_updateQueue = node._updateQueueNext;
@@ -91,13 +98,14 @@ package away3d.core.partition
 				if (t)
 					t._updateQueueNext = node._updateQueueNext;
 			}
-
+			
 			node._updateQueueNext = null;
-
+			
 			// any updates have been made undone
-			if (!_updateQueue) _updatesMade = false;
+			if (!_updateQueue)
+				_updatesMade = false;
 		}
-
+		
 		/**
 		 * Updates all entities that were marked for update.
 		 */
@@ -106,21 +114,30 @@ package away3d.core.partition
 			var node : EntityNode = _updateQueue;
 			var targetNode : NodeBase;
 			var t : EntityNode;
+			
+			//clear updateQueue early to allow for newly marked entity updates
+			_updateQueue = null;
+			
+			_updatesMade = false;
 
 			do {
+				//call an internal update on the entity to fire any attached logic
+				node.entity.internalUpdate();
+				
 				targetNode = _rootNode.findPartitionForEntity(node.entity);
 
 				// if changed, find and attach the mesh node to the best suited partition node
 				if (node.parent != targetNode) {
-					if (node) node.removeFromParent();
+					if (node)
+						node.removeFromParent();
+					
 					targetNode.addNode(node);
 				}
+				
 				t = node._updateQueueNext;
 				node._updateQueueNext = null;
+				
 			} while (node = t);
-
-			_updateQueue = null;
-			_updatesMade = false;
 		}
 	}
 }

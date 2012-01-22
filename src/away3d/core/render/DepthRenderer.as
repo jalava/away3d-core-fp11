@@ -26,9 +26,9 @@ package away3d.core.render
 		 * @param antiAlias The amount of anti-aliasing to be used.
 		 * @param renderMode The render mode to be used.
 		 */
-		public function DepthRenderer(renderBlended : Boolean = false, antiAlias : uint = 0, renderMode : String = "auto")
+		public function DepthRenderer(renderBlended : Boolean = false)
 		{
-			super(antiAlias, true, renderMode);
+			super();
 			_renderBlended = renderBlended;
 			_backgroundR = 1;
 			_backgroundG = 1;
@@ -58,8 +58,8 @@ package away3d.core.render
 
 			_context.setDepthTest(false, Context3DCompareMode.LESS);
 
-			if (entityCollector.skyBox)
-				drawSkyBox(entityCollector);
+//			if (entityCollector.skyBox)
+//				drawSkyBox(entityCollector);
 
 			_context.setDepthTest(true, Context3DCompareMode.LESS);
 			drawRenderables(entityCollector.opaqueRenderableHead, entityCollector);
@@ -67,11 +67,11 @@ package away3d.core.render
 			if (_renderBlended)
 				drawRenderables(entityCollector.blendedRenderableHead, entityCollector);
 
-			if (_activeMaterial) _activeMaterial.deactivate(_stage3DProxy);
+			if (_activeMaterial) _activeMaterial.deactivateForDepth(_stage3DProxy);
 			_activeMaterial = null;
 		}
 
-		private function drawSkyBox(entityCollector : EntityCollector) : void
+		/*private function drawSkyBox(entityCollector : EntityCollector) : void
 		{
 			var skyBox : IRenderable = entityCollector.skyBox;
 			var material : MaterialBase = skyBox.material;
@@ -80,7 +80,7 @@ package away3d.core.render
 			material.activateForDepth(_stage3DProxy, camera);
 			material.renderDepth(skyBox, _stage3DProxy, camera);
 			material.deactivateForDepth(_stage3DProxy);
-		}
+		}           */
 
 		/**
 		 * Draw a list of renderables.

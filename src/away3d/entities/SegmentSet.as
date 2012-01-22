@@ -12,9 +12,9 @@
 	import away3d.core.partition.RenderableNode;
 	import away3d.materials.MaterialBase;
 	import away3d.materials.SegmentMaterial;
+	import away3d.primitives.LineSegment;
 	import away3d.primitives.data.Segment;
 
-	import flash.display3D.Context3D;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix;
@@ -24,11 +24,12 @@
 
 	public class SegmentSet extends Entity implements IRenderable
 	{
+		protected var _segments : Vector.<Segment>;
+
 		private var _material : MaterialBase;
 		private var _nullAnimation : NullAnimation;
 		private var _animationState : AnimationStateBase;
 		private var _vertices : Vector.<Number>;
-		protected var _segments : Vector.<Segment>;
 
 		private var _numVertices : uint;
 		private var _indices : Vector.<uint>;
@@ -136,7 +137,7 @@
 		}
 
 
-		private function remove(index : uint) : void
+		private function removeSegmentByIndex(index : uint) : void
 		{
 			var indVert : uint = _indices[index] * 11;
 			_indices.splice(index, 6);
@@ -155,7 +156,7 @@
 			for (var i : uint = 0; i < _segments.length; ++i) {
 				if (_segments[i] == segment) {
 					_segments.splice(i, 1);
-					remove(segment.index);
+					removeSegmentByIndex(segment.index);
 					_lineCount--;
 				} else {
 					_segments[i].index = index;
@@ -166,17 +167,39 @@
 			_indexBufferDirty = true;
 		}
 
-		protected function clearSegments() : void
+		public function getSegment(index:uint):Segment
+		{
+			return _segments[index];
+		}
+
+		public function removeAllSegments() : void
 		{
 			_vertices.length = 0;
 			_indices.length = 0;
 			_segments.length = 0;
+			_numVertices = 0;
+			_numIndices = 0;
+			_lineCount = 0;
 			_vertexBufferDirty = true;
 			_indexBufferDirty = true;
 		}
 
+		public function getIndexBuffer(stage3DProxy : Stage3DProxy) : IndexBuffer3D
+		{
+			if (_indexBufferDirty) {
+				_indexBuffer = stage3DProxy._context3D.createIndexBuffer(_numIndices);
+				_indexBuffer.uploadFromVector(_indices, 0, _numIndices);
+				_indexBufferDirty = false;
+			}
+			return _indexBuffer;
+		}
+
 		public function getVertexBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
 		{
+			if( _numVertices == 0 ) {
+				addSegment( new LineSegment( new Vector3D(), new Vector3D() ) ); // buffers cannot be empty
+			}
+
 			if (_vertexBufferDirty) {
 				_vertexBuffer = stage3DProxy._context3D.createVertexBuffer(_numVertices, 11);
 				_vertexBuffer.uploadFromVector(_vertices, 0, _numVertices);
@@ -198,16 +221,6 @@
 		public function getVertexTangentBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
 		{
 			return null;
-		}
-
-		public function getIndexBuffer(stage3DProxy : Stage3DProxy) : IndexBuffer3D
-		{
-			if (_indexBufferDirty) {
-				_indexBuffer = stage3DProxy._context3D.createIndexBuffer(_numIndices);
-				_indexBuffer.uploadFromVector(_indices, 0, _numIndices);
-				_indexBufferDirty = false;
-			}
-			return _indexBuffer;
 		}
 
 		public function get mouseDetails() : Boolean
@@ -271,6 +284,11 @@
 		}
 
 		public function get uvTransform() : Matrix
+		{
+			return null;
+		}
+
+		public function getSecondaryUVBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
 		{
 			return null;
 		}

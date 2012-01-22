@@ -63,12 +63,30 @@ package away3d.materials.methods
 			return _baseSpecularMethod.bitmapData;
 		}
 
-		/**
-		 * @inheritDoc
-		 */
 		override public function set bitmapData(value : BitmapData) : void
 		{
 			_baseSpecularMethod.bitmapData = value;
+		}
+
+
+		override public function get specularMap() : BitmapData
+		{
+			return _baseSpecularMethod.specularMap;
+		}
+
+		override public function set specularMap(value : BitmapData) : void
+		{
+			_baseSpecularMethod.specularMap = value;
+		}
+
+		override public function get glossMap() : BitmapData
+		{
+			return _baseSpecularMethod.glossMap;
+		}
+
+		override public function set glossMap(value : BitmapData) : void
+		{
+			_baseSpecularMethod.glossMap = value;
 		}
 
 		/**
@@ -99,14 +117,6 @@ package away3d.materials.methods
 		override arcane function get needsView() : Boolean
 		{
 			return _baseSpecularMethod.needsView;
-		}
-
-		/**
-		 * @inheritDoc
-		 */
-		override arcane function get specularDataRegister() : ShaderRegisterElement
-		{
-			return _baseSpecularMethod.specularDataRegister;
 		}
 
 		/**
@@ -237,6 +247,14 @@ package away3d.materials.methods
 		/**
 		 * @inheritDoc
 		 */
+		override arcane function set secondaryUVFragmentReg(value : ShaderRegisterElement) : void
+		{
+			_baseSpecularMethod.secondaryUVFragmentReg = _secondaryUVFragmentReg = value;
+		}
+
+		/**
+		 * @inheritDoc
+		 */
 		override arcane function set viewDirFragmentReg(value : ShaderRegisterElement) : void
 		{
 			_viewDirFragmentReg = _baseSpecularMethod.viewDirFragmentReg = value;
@@ -246,15 +264,6 @@ package away3d.materials.methods
 		{
 			_projectionReg = _baseSpecularMethod.projectionReg = value;
 		}
-
-		/**
-		 * @inheritDoc
-		 */
-		override arcane function get specularTextureRegister() : ShaderRegisterElement
-		{
-			return _baseSpecularMethod.specularTextureRegister;
-		}
-
 
 		override public function set viewDirVaryingReg(value : ShaderRegisterElement) : void
 		{
@@ -299,6 +308,12 @@ package away3d.materials.methods
 		arcane override function reset() : void
 		{
 			_baseSpecularMethod.reset();
+		}
+
+		arcane override function cleanCompilationData() : void
+		{
+			super.cleanCompilationData();
+			_baseSpecularMethod.cleanCompilationData();
 		}
 
 		override public function set shadowRegister(shadowReg : ShaderRegisterElement) : void

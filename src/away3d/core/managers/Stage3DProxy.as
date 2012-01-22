@@ -7,8 +7,6 @@ package away3d.core.managers
 	import flash.display3D.Context3D;
 	import flash.display3D.Program3D;
 	import flash.display3D.VertexBuffer3D;
-	import flash.display3D.textures.Texture;
-	import flash.display3D.textures.TextureBase;
 	import flash.display3D.textures.TextureBase;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -40,6 +38,10 @@ package away3d.core.managers
 		private var _contextRequested : Boolean;
 		private var _activeVertexBuffers : Vector.<VertexBuffer3D> = new Vector.<VertexBuffer3D>(8, true);
 		private var _activeTextures : Vector.<TextureBase> = new Vector.<TextureBase>(8, true);
+		private var _renderTarget : TextureBase;
+		private var _renderSurfaceSelector : int;
+		private var _scissorRect : Rectangle;
+
 
 		/**
 		 * Creates a Stage3DProxy object. This method should not be called directly. Creation of Stage3DProxy objects should
@@ -55,7 +57,8 @@ package away3d.core.managers
 			_stage3D.x = 0;
 			_stage3D.y = 0;
 			_stage3DManager = stage3DManager;
-			_stage3D.addEventListener(Event.CONTEXT3D_CREATE, onContext3DUpdate);
+			// whatever happens, be sure this has highest priority
+			_stage3D.addEventListener(Event.CONTEXT3D_CREATE, onContext3DUpdate, false, 1000, false);
 			requestContext();
 		}
 
@@ -91,10 +94,10 @@ package away3d.core.managers
 		{
 			_stage3DManager.removeStage3DProxy(this);
 			_stage3D.removeEventListener(Event.CONTEXT3D_CREATE, onContext3DUpdate);
+			freeContext3D();
 			_stage3D = null;
 			_stage3DManager = null;
 			_stage3DIndex = -1;
-			freeContext3D();
 		}
 
 		/**
@@ -114,6 +117,47 @@ package away3d.core.managers
 			if (_context3D)
 				_context3D.configureBackBuffer(backBufferWidth, backBufferHeight, antiAlias, enableDepthAndStencil);
 		}
+
+		public function get enableDepthAndStencil() : Boolean
+		{
+			return _enableDepthAndStencil;
+		}
+
+		public function get renderTarget() : TextureBase
+		{
+			return _renderTarget;
+		}
+
+		public function get renderSurfaceSelector() : int
+		{
+			return _renderSurfaceSelector;
+		}
+
+		public function setRenderTarget(target : TextureBase, enableDepthAndStencil : Boolean = false, surfaceSelector : int = 0) : void
+		{
+			if (_renderTarget == target && surfaceSelector == _renderSurfaceSelector) return;
+			_renderTarget = target;
+			_renderSurfaceSelector = surfaceSelector;
+			_enableDepthAndStencil = enableDepthAndStencil;
+
+			if (target)
+				_context3D.setRenderToTexture(target, enableDepthAndStencil, _antiAlias, surfaceSelector);
+			else
+				_context3D.setRenderToBackBuffer();
+		}
+
+		public function get scissorRect() : Rectangle
+		{
+			return _scissorRect;
+		}
+
+		public function set scissorRect(value : Rectangle) : void
+		{
+			_scissorRect = value;
+			_context3D.setScissorRectangle(_scissorRect);
+		}
+
+
 
 		/**
 		 * The index of the Stage3D which is managed by this instance of Stage3DProxy.

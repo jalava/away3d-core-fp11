@@ -1,5 +1,7 @@
 package away3d.animators
 {
+
+	import away3d.animators.data.AnimationSequenceBase;
 	import away3d.animators.data.SkeletonAnimationSequence;
 	import away3d.animators.data.SkeletonAnimationState;
 	import away3d.animators.skeleton.SkeletonNaryLERPNode;
@@ -72,6 +74,12 @@ package away3d.animators
 			start();
 		}
 
+		public function hasSequence(sequenceName:String):Boolean
+		{
+			if(_clips[sequenceName] == null) return false;
+			return true;
+		}
+
 		/**
 		 * Adds a sequence to the controller.
 		 */
@@ -131,11 +139,10 @@ package away3d.animators
 
 		/**
 		 * Retrieves a sequence with a given name.
-		 * @private
 		 */
-		/*arcane function getSequence(sequenceName : String) : AnimationSequenceBase
+		public function getSequence(sequenceName : String) : AnimationSequenceBase
 		{
-			return _clips[sequenceName];
-		}  */
+			return _clips[sequenceName].clip;
+		}
 	}
 }

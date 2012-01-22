@@ -73,6 +73,7 @@ package away3d.core.traverse
 		public function set camera(value : Camera3D) : void
 		{
 			_camera = value;
+			_entryPoint = _camera.scenePosition;
 		}
 
 		/**
@@ -138,6 +139,7 @@ package away3d.core.traverse
 			_blendedRenderableHead = null;
 			_opaqueRenderableHead = null;
 			_renderableListItemPool.freeAll();
+			_skyBox = null;
 			if (_numLights > 0) _lights.length = _numLights = 0;
 		}
 

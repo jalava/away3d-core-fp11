@@ -2,6 +2,7 @@ package away3d.core.render
 {
 	import away3d.arcane;
 	import away3d.cameras.Camera3D;
+	import away3d.containers.View3D;
 	import away3d.core.base.IRenderable;
 	import away3d.core.base.SubGeometry;
 	import away3d.core.base.SubMesh;
@@ -13,13 +14,16 @@ package away3d.core.render
 	import com.adobe.utils.AGALMiniAssembler;
 
 	import flash.display.BitmapData;
+	import flash.display3D.Context3DBlendFactor;
 	import flash.display3D.Context3DClearMask;
+	import flash.display3D.Context3DCompareMode;
 	import flash.display3D.Context3DProgramType;
 	import flash.display3D.Context3DTriangleFace;
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.Program3D;
 	import flash.geom.Matrix3D;
 	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.geom.Vector3D;
 
 	use namespace arcane;
@@ -36,8 +40,7 @@ package away3d.core.render
 		private var _triangleProgram3D : Program3D;
 		public var _bitmapData : BitmapData;
 		private var _viewportData : Vector.<Number>;
-		private var _boundScale : Vector.<Number>;
-		private var _boundOffset : Vector.<Number>;
+		private var _boundOffsetScale : Vector.<Number>;
 		private var _id : Vector.<Number>;
 
 		private var _interactives : Vector.<IRenderable>;
@@ -56,18 +59,21 @@ package away3d.core.render
 //		private var _localRayPos : Vector3D = new Vector3D();
 //		private var _localRayDir : Vector3D = new Vector3D();
 		private var _potentialFound : Boolean;
-
+		private var _view : View3D;
+		private static const MOUSE_SCISSOR_RECT : Rectangle = new Rectangle(0, 0, 1, 1);
 
 		/**
 		 * Creates a new HitTestRenderer object.
 		 * @param renderMode The render mode to use.
 		 */
-		public function HitTestRenderer(renderMode : String = "auto")
+		public function HitTestRenderer(view : View3D)
 		{
-			super(0, true, renderMode);
+			super();
+			_view = view;
 			swapBackBuffer = false;
-			backBufferWidth = 32;
-			backBufferHeight = 32;
+
+			// DO NOT SORT
+			renderableSorter = null;
 
 			init();
 		}
@@ -79,37 +85,13 @@ package away3d.core.render
 		{
 			_id = new Vector.<Number>(4, true);
 			_viewportData = new Vector.<Number>(4, true);	// first 2 contain scale, last 2 translation
-			_boundScale = new Vector.<Number>(4, true);	// first 2 contain scale, last 2 translation
-			_boundOffset = new Vector.<Number>(4, true);	// first 2 contain scale, last 2 translation
-			_boundScale[3] = 1;
-			_boundOffset[3] = 0;
+			_boundOffsetScale = new Vector.<Number>(8, true);	// first 2 contain scale, last 2 translation
+			_boundOffsetScale[3] = 0;
+			_boundOffsetScale[7] = 1;
 			_localHitPosition = new Vector3D();
 			_interactives = new Vector.<IRenderable>();
 			_bitmapData = new BitmapData(1, 1, false, 0);
 			_inverse = new Matrix3D();
-		}
-
-		// bypass invalidation routine
-		arcane override function set viewPortX(value : Number) : void
-		{
-			if (_stage3DProxy) {
-				_viewPortX = value;
-				_stage3DProxy.x = value;
-			}
-			else {
-				super.viewPortX = value;
-			}
-		}
-
-		arcane override function set viewPortY(value : Number) : void
-		{
-			if (_stage3DProxy) {
-				_viewPortY = value;
-				_stage3DProxy.y = value;
-			}
-			else {
-				super.viewPortY = value;
-			}
 		}
 
 		/**
@@ -122,8 +104,8 @@ package away3d.core.render
 		{
 			if (!_stage3DProxy) return;
 
-			_viewportData[0] = _viewPortWidth;
-			_viewportData[1] = _viewPortHeight;
+			_viewportData[0] = _view.width;
+			_viewportData[1] = _view.height;
 			_viewportData[2] = -(_projX = ratioX*2 - 1);
 			_viewportData[3] = _projY = ratioY*2 - 1;
 
@@ -131,7 +113,11 @@ package away3d.core.render
 			_hitRenderable = null;
 			_hitUV = null;
 			_potentialFound = false;
-			render(entityCollector);
+
+			draw(entityCollector);
+
+			// clear buffers
+			_stage3DProxy.setSimpleVertexBuffer(0, null);
 
 			if (!_context || !_potentialFound) return;
 			_context.drawToBitmapData(_bitmapData);
@@ -183,10 +169,13 @@ package away3d.core.render
 			var camera : Camera3D = entityCollector.camera;
 
 			_context.clear(0, 0, 0, 1);
+			_stage3DProxy.scissorRect = MOUSE_SCISSOR_RECT;
 
 			_interactives.length = _interactiveId = 0;
 
 			if (!_objectProgram3D) initObjectProgram3D();
+			_context.setBlendFactors(Context3DBlendFactor.ONE, Context3DBlendFactor.ZERO);
+			_context.setDepthTest(true, Context3DCompareMode.LESS);
 			_stage3DProxy.setProgram(_objectProgram3D);
 			_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 4, _viewportData, 1);
 			drawRenderables(entityCollector.opaqueRenderableHead, camera);
@@ -201,11 +190,6 @@ package away3d.core.render
 		private function drawRenderables(item : RenderableListItem, camera : Camera3D) : void
 		{
 			var renderable : IRenderable;
-//			var raw : Vector.<Number> = Matrix3DUtils.RAW_DATA_CONTAINER;
-//			var ox : Number, oy  : Number, oz : Number;
-
-			// todo: do a fast ray intersection test first?
-			updateRay(camera);
 
 			while (item) {
 				renderable = item.renderable;
@@ -215,26 +199,6 @@ package away3d.core.render
 					item = item.next;
 					continue;
 				}
-
-				// todo: reenable raycast this and make optional? :s
-				/*ox = _rayDir.x;
-				oy = _rayDir.y;
-				oz = _rayDir.z;
-
-				// use the transpose of the inverse to keep unit length
-				renderable.sceneTransform.copyRawDataTo(raw);
-				_localRayDir.x = raw[0]*ox + raw[1]*oy + raw[2]*oz;
-				_localRayDir.y = raw[4]*ox + raw[5]*oy + raw[6]*oz;
-				_localRayDir.z = raw[8]*ox + raw[9]*oy + raw[10]*oz;
-
-				renderable.inverseSceneTransform.copyRawDataTo(raw);
-				ox = _rayPos.x;
-				oy = _rayPos.y;
-				oz = _rayPos.z;
-				_localRayPos.x = raw[0]*ox + raw[4]*oy + raw[8]*oz + raw[12];
-				_localRayPos.y = raw[1]*ox + raw[5]*oy + raw[9]*oz + raw[13];
-				_localRayPos.z = raw[2]*ox + raw[6]*oy + raw[10]*oz + raw[14];
-				if (!renderable.sourceEntity.bounds.intersectsLine(_localRayPos, _localRayDir)) continue;*/
 
 				_potentialFound = true;
 
@@ -338,18 +302,18 @@ package away3d.core.render
 
 			if (!_triangleProgram3D) initTriangleProgram3D();
 
-			_boundScale[0] = scX = 1/(entity.maxX-entity.minX);
-			_boundScale[1] = scY = 1/(entity.maxY-entity.minY);
-			_boundScale[2] = scZ = 1/(entity.maxZ-entity.minZ);
-			_boundOffset[0] = offsX = -entity.minX;
-			_boundOffset[1] = offsY = -entity.minY;
-			_boundOffset[2] = offsZ = -entity.minZ;
+			_boundOffsetScale[4] = scX = 1/(entity.maxX-entity.minX);
+			_boundOffsetScale[5] = scY = 1/(entity.maxY-entity.minY);
+			_boundOffsetScale[6] = scZ = 1/(entity.maxZ-entity.minZ);
+			_boundOffsetScale[0] = offsX = -entity.minX;
+			_boundOffsetScale[1] = offsY = -entity.minY;
+			_boundOffsetScale[2] = offsZ = -entity.minZ;
 
 			_stage3DProxy.setProgram(_triangleProgram3D);
 			_context.clear(0, 0, 0, 0, 1, 0, Context3DClearMask.DEPTH);
+			_context.setScissorRectangle(MOUSE_SCISSOR_RECT);
 			_context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, localViewProjection, true);
-			_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 5, _boundOffset, 1);
-			_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 6, _boundScale, 1);
+			_context.setProgramConstantsFromVector(Context3DProgramType.VERTEX, 5, _boundOffsetScale, 2);
 			_stage3DProxy.setSimpleVertexBuffer(0, _hitRenderable.getVertexBuffer(_stage3DProxy), Context3DVertexBufferFormat.FLOAT_3);
 			_context.drawTriangles(_hitRenderable.getIndexBuffer(_stage3DProxy), 0, _hitRenderable.numTriangles);
 			_context.drawToBitmapData(_bitmapData);
@@ -387,6 +351,8 @@ package away3d.core.render
 			var x : Number = _localHitPosition.x, y : Number = _localHitPosition.y, z : Number = _localHitPosition.z;
 			var u : Number, v : Number;
 			var ui1 : uint, ui2 : uint, ui3 : uint;
+
+			updateRay(camera);
 
 			_hitUV = new Point();
 

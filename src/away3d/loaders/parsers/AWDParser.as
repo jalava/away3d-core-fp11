@@ -4,7 +4,7 @@ package away3d.loaders.parsers
 	import away3d.events.AssetEvent;
 	import away3d.events.ParserEvent;
 	import away3d.loaders.misc.ResourceDependency;
-
+	
 	import flash.utils.ByteArray;
 
 	use namespace arcane;
@@ -31,19 +31,7 @@ package away3d.loaders.parsers
 		
 		public static function supportsData(data : *) : Boolean
 		{
-			var ba : ByteArray;
-			var str : String;
-			
-			// Data will be byte array since this parser
-			// has data format = BINARY
-			ba = ByteArray(data);
-			if (AWD2Parser.supportsData(ba))
-				return true;
-			
-			// If not AWD2, convert to string and let
-			// AWD1Parser check if data is supported
-			str = ba.readUTFBytes(ba.bytesAvailable);
-			return AWD1Parser.supportsData(str);
+			return (AWD1Parser.supportsData(data) || AWD2Parser.supportsData(data));
 		}
 		
 		
@@ -101,7 +89,7 @@ package away3d.loaders.parsers
 			if (!_parser) {
 				// Inspect data to find correct parser. AWD2 parser
 				// file inspection is the most reliable
-				if (AWD2Parser.supportsData(_byteData))
+				if (AWD2Parser.supportsData(_data))
 					_parser = new AWD2Parser();
 				else
 					_parser = new AWD1Parser();
@@ -120,15 +108,7 @@ package away3d.loaders.parsers
 				_parser.addEventListener(AssetEvent.SKELETON_COMPLETE, onAssetComplete);
 				_parser.addEventListener(AssetEvent.SKELETON_POSE_COMPLETE, onAssetComplete);
 				
-				// Start parsing using concrete parser
-				switch (_parser.dataFormat) {
-					case ParserDataFormat.BINARY:
-						_parser.parseBytesAsync(_byteData);
-						break;
-					case ParserDataFormat.PLAIN_TEXT:
-						_parser.parseTextAsync(_byteData.readUTFBytes(_byteData.bytesAvailable));
-						break;
-				}
+				_parser.parseAsync(_data);
 			}
 			
 			// Because finishParsing() is overriden, we can stop

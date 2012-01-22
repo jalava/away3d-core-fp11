@@ -23,6 +23,8 @@ package away3d.loaders.parsers
 	 */
 	public class MD5MeshParser extends ParserBase
 	{
+		private var _textData:String;
+		private var _startedParsing : Boolean;
 		private static const VERSION_TOKEN : String = "MD5Version";
 		private static const COMMAND_LINE_TOKEN : String = "commandline";
 		private static const NUM_JOINTS_TOKEN : String = "numJoints";
@@ -121,7 +123,12 @@ package away3d.loaders.parsers
 		protected override function proceedParsing() : Boolean
 		{
 			var token : String;
-
+			
+			if(!_startedParsing) {
+				_textData = getTextData();
+				_startedParsing = true;
+			}
+			
 			while (hasTime()) {
 				token = getNextToken();
 				switch (token) {

@@ -129,9 +129,12 @@ package away3d.entities
 		{
 			var comps : Vector.<Vector3D>;
 			var rot : Vector3D;
-			if (++_mvpIndex == _stackLen++)
+			if (++_mvpIndex == _stackLen) {
 				_mvpTransformStack[_mvpIndex] = new Matrix3D();
+				++_stackLen;
+			}
 
+			// todo: find better way
 			var mvp : Matrix3D = _mvpTransformStack[_mvpIndex];
 			mvp.copyFrom(sceneTransform);
 			mvp.append(camera.inverseSceneTransform);
@@ -140,7 +143,7 @@ package away3d.entities
 			rot.x = rot.y = rot.z = 0;
 			mvp.recompose(comps);
 			mvp.append(camera.lens.matrix);
-			mvp.copyRowTo(3, _pos);
+			mvp.copyColumnTo(3, _pos);
 			_zIndices[_mvpIndex] = -_pos.z;
 		}
 
@@ -206,6 +209,12 @@ package away3d.entities
 		}
 
 		public function get uvTransform() : Matrix
+		{
+			return null;
+		}
+
+		// not supported for sprites
+		public function getSecondaryUVBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
 		{
 			return null;
 		}

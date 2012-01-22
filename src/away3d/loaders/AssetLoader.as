@@ -67,7 +67,7 @@ package away3d.loaders
 		/**
 		 * Loads a file and (optionally) all of its dependencies.
 		 */
-		public function load(req : URLRequest, parser : ParserBase = null, context : AssetLoaderContext = null, ns : String = null) : AssetLoaderToken
+		public function load(req : URLRequest, context : AssetLoaderContext = null, ns : String = null, parser : ParserBase = null) : AssetLoaderToken
 		{
 			var token : AssetLoaderToken = new AssetLoaderToken(this);
 			
@@ -84,7 +84,7 @@ package away3d.loaders
 		/**
 		 * Loads a resource from already loaded data.
 		 */
-		public function parseData(data : *, id : String, parser : ParserBase = null, context : AssetLoaderContext = null, ns : String = null) : AssetLoaderToken
+		public function loadData(data : *, id : String, context : AssetLoaderContext = null, ns : String = null, parser : ParserBase = null) : AssetLoaderToken
 		{
 			var token : AssetLoaderToken = new AssetLoaderToken(this);
 			
@@ -168,7 +168,7 @@ package away3d.loaders
 			loader.addEventListener(AssetEvent.SKELETON_POSE_COMPLETE, onAssetComplete);
 			loader.addEventListener(ParserEvent.READY_FOR_DEPENDENCIES, onReadyForDependencies);
 			_loadingDependency = dependency;
-
+			
 			// Get already loaded (or mapped) data if available
 			data = _loadingDependency.data;
 			if (_context && _loadingDependency.request && _context.hasDataForUrl(_loadingDependency.request.url))
@@ -186,7 +186,7 @@ package away3d.loaders
 					retrieveNext();
 				}
 				else {
-					loader.parseData(data, parser);
+					loader.parseData(data, parser, _loadingDependency.request);
 				}
 			}
 			else {
@@ -199,10 +199,14 @@ package away3d.loaders
 		
 		private function joinUrl(base : String, end : String) : String
 		{
-			if (base.charAt(base.length-1)=='/')
-				base = base.substr(0, base.length-1);
 			if (end.charAt(0)=='/')
 				end = end.substr(1);
+			
+			if (base.length==0)
+				return end;
+			
+			if (base.charAt(base.length-1)=='/')
+				base = base.substr(0, base.length-1);
 			
 			return base.concat('/', end);
 		}
@@ -288,17 +292,17 @@ package away3d.loaders
 			loader.removeEventListener(AssetEvent.SKELETON_COMPLETE, onAssetComplete);
 			loader.removeEventListener(AssetEvent.SKELETON_POSE_COMPLETE, onAssetComplete);
 			
+			// TODO: Investigate this. Why is this done?
+			var ext:String = loader.url.substring(loader.url.length-4, loader.url.length).toLowerCase();
+			if(ext ==".jpg" || ext ==".png"){
+				_loadingDependency.resolveFailure();
+				prepareNextRetrieve(loader, event, false);
+			}
+
 			if(hasEventListener(LoaderEvent.LOAD_ERROR)){
 				dispatchEvent(new LoaderEvent(LoaderEvent.LOAD_ERROR, loader.url, event.message));
 			} else{
 				trace("Unable to load "+loader.url);
-			}
-			
-			// TODO: Investigate this. Why is this done?
-			var ext:String = loader.url.substring(loader.url.length-4, loader.url.length).toLowerCase();
-			if(ext == ".mtl" || ext ==".jpg" || ext ==".png"){
-				_loadingDependency.resolveFailure();
-				prepareNextRetrieve(loader, event, false);
 			}
 		}
 		
@@ -341,6 +345,8 @@ package away3d.loaders
 		private function onRetrievalComplete(event : LoaderEvent) : void
 		{
 			var loader : SingleFileLoader = SingleFileLoader(event.target);
+			prepareNextRetrieve(loader, event); //prepare next in front of removing listeners to allow any remaining asset events to propagate
+			
 			loader.removeEventListener(ParserEvent.READY_FOR_DEPENDENCIES, onReadyForDependencies);
 			loader.removeEventListener(LoaderEvent.DATA_LOADED, onRetrievalComplete);
 			loader.removeEventListener(LoaderEvent.LOAD_ERROR, onRetrievalFailed);
@@ -354,7 +360,6 @@ package away3d.loaders
 			loader.removeEventListener(AssetEvent.MESH_COMPLETE, onAssetComplete);
 			loader.removeEventListener(AssetEvent.SKELETON_COMPLETE, onAssetComplete);
 			loader.removeEventListener(AssetEvent.SKELETON_POSE_COMPLETE, onAssetComplete);
-			prepareNextRetrieve(loader, event);
 		}
 		
 		/**

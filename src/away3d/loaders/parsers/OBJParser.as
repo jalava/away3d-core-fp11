@@ -8,9 +8,11 @@ package away3d.loaders.parsers
 	import away3d.entities.Mesh;
 	import away3d.library.assets.BitmapDataAsset;
 	import away3d.loaders.misc.ResourceDependency;
+	import away3d.loaders.parsers.utils.ParserUtil;
 	import away3d.materials.BitmapMaterial;
 	import away3d.materials.methods.BasicSpecularMethod;
-
+	import away3d.tools.utils.TextureUtils;
+	
 	import flash.display.BitmapData;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
@@ -22,6 +24,7 @@ package away3d.loaders.parsers
 	 */
 	public class OBJParser extends ParserBase
 	{
+		private var _textData:String;
 		private var _startedParsing : Boolean;
 		private var _charIndex:uint;
 		private var _oldIndex:uint;
@@ -40,7 +43,7 @@ package away3d.loaders.parsers
 		private var _objectIndex : uint;
 		private var _realIndices : Array;
 		private var _vertexIndex : uint;
-		
+
 		private var _mtlLib : Boolean;
 		private var _mtlLibLoaded : Boolean = true;
 		private var _idCount : uint;
@@ -90,10 +93,14 @@ package away3d.loaders.parsers
 		 */
 		public static function supportsData(data : *) : Boolean
 		{
-			var content : String = String(data);
+			var content : String = ParserUtil.toString(data);
+			var hasV : Boolean
+			var hasF : Boolean
 			
-			var hasV : Boolean = content.indexOf("\nv ") != -1;
-			var hasF : Boolean = content.indexOf("\nf ") != -1;
+			if (content) {
+				hasV = content.indexOf("\nv ") != -1;
+				hasF = content.indexOf("\nf ") != -1;
+			}
 			
 			return hasV && hasF;
 		}
@@ -152,10 +159,11 @@ package away3d.loaders.parsers
 			var creturn:String = String.fromCharCode(10);
 			var trunk:Array;
 			
-			if(_textData.indexOf(creturn) == -1)
-				creturn = String.fromCharCode(13);
-			
 			if(!_startedParsing){
+				_textData = getTextData();
+				var re:RegExp = new RegExp(String.fromCharCode(13),"g");
+				_textData = _textData.replace(re, "");
+
 				_startedParsing = true;
 				_vertices = new Vector.<Vertex>();
 				_vertexNormals = new Vector.<Vertex>();
@@ -189,19 +197,21 @@ package away3d.loaders.parsers
 				if(_mtlLib  && !_mtlLibLoaded)
 					return MORE_TO_PARSE;
 				
-				try {
+				//try {
 					translate();
 					applyMaterials();
 					
 					return PARSING_DONE;
 					
+					/*
 				} catch(e:Error){
 					parsingFailure = true;
-					trace("parsing failure");
+					trace("parsing failure: " + e.message);
 					
 					//TODO: DEAL WITH THIS ERROR!
 					return PARSING_DONE;
 				}
+					*/
 			}
 			
 			return MORE_TO_PARSE;

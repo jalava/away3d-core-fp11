@@ -31,7 +31,7 @@ package away3d.materials.methods
 		private var _diffuseData : Vector.<Number>;
 		private var _cutOffData : Vector.<Number>;
 
-		private var _diffuseR : Number, _diffuseG : Number = 0, _diffuseB : Number = 0, _diffuseA : Number;
+		private var _diffuseR : Number = 1, _diffuseG : Number = 1, _diffuseB : Number = 1, _diffuseA : Number = 1;
 		protected var _shadowRegister : ShaderRegisterElement;
 
         private var _alphaThreshold : Number = 0;
@@ -100,7 +100,11 @@ package away3d.materials.methods
 
 		}
 
-        // todo: provide support for alpha map?
+		/**
+		 * The minimum alpha value for which pixels should be drawn. This is used for transparency that is either
+		 * invisible or entirely opaque, often used with textures for foliage, etc.
+		 * Recommended values are 0 to disable alpha, or 0.5 to create smooth edges. Default value is 0 (disabled).
+		 */
         public function get alphaThreshold() : Number
         {
             return _alphaThreshold;
@@ -173,7 +177,17 @@ package away3d.materials.methods
 		arcane override function reset() : void
 		{
 			super.reset();
+
+			_diffuseInputIndex = -1;
+			_cutOffIndex = -1;
+		}
+
+		arcane override function cleanCompilationData() : void
+		{
+			super.cleanCompilationData();
 			_shadowRegister = null;
+			_totalLightColorReg = null;
+			_diffuseInputRegister = null;
 		}
 
 		/**
@@ -242,11 +256,13 @@ package away3d.materials.methods
 				regCache.removeFragmentTempUsage(_totalLightColorReg);
 			}
 
-			temp = _numLights > 0? regCache.	getFreeFragmentVectorTemp() : targetReg;
+			temp = _numLights > 0? regCache.getFreeFragmentVectorTemp() : targetReg;
 
             if (_useTexture) {
 				_diffuseInputRegister = regCache.getFreeTextureReg();
-				code += getTexSampleCode(temp, _diffuseInputRegister);
+				code += getTexSampleCode(temp, _diffuseInputRegister) +
+						// apparently, still needs to un-premultiply :s
+						"div " + temp + ".xyz, " + temp + ".xyz, " + temp + ".w\n";
                 if (_alphaThreshold > 0) {
                     cutOffReg = regCache.getFreeFragmentConstant();
                     _cutOffIndex = cutOffReg.index;

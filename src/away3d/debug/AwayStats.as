@@ -1,8 +1,9 @@
 package away3d.debug
 {
+	import away3d.arcane;
 	import away3d.containers.View3D;
 	import away3d.core.managers.Stage3DManager;
-
+	
 	import flash.display.BitmapData;
 	import flash.display.CapsStyle;
 	import flash.display.Graphics;
@@ -17,6 +18,8 @@ package away3d.debug
 	import flash.text.TextFormat;
 	import flash.utils.Timer;
 	import flash.utils.getTimer;
+	
+	use namespace arcane;
 
 	/**
 	 * <p>Stats monitor for Away3D or general use in any project. The widget was designed to
@@ -108,6 +111,7 @@ package away3d.debug
 		private var _enable_mod_fr : Boolean;
 		private var _transparent : Boolean;
 		private var _minimized : Boolean;
+		private var _showing_driv_info : Boolean;
 		
 		private static const _WIDTH : Number = 125;
 		private static const _MAX_HEIGHT : Number = 85;
@@ -192,7 +196,27 @@ package away3d.debug
 			
 			_init();
 		}
-		
+
+		public function get max_ram() : Number
+		{
+			return _max_ram;
+		}
+
+		public function get ram() : Number
+		{
+			return _ram;
+		}
+
+		public function get avg_fps() : Number
+		{
+			return _avg_fps;
+		}
+
+		public function get max_fps() : uint
+		{
+			return _max_fps;
+		}
+
 		public function get fps():int
 		{
 			return _fps;
@@ -459,11 +483,21 @@ package away3d.debug
 			_btm_bar.addChild(_poly_tf);
 			
 			// SOFTWARE RENDERER WARNING
+			swhw_label_tf = new TextField;
+			swhw_label_tf.defaultTextFormat = _label_format;
+            swhw_label_tf.autoSize = TextFieldAutoSize.LEFT;
+			swhw_label_tf.text = 'DRIV:';
+			swhw_label_tf.x = 10;
+			swhw_label_tf.y = _LOWER_Y;
+			swhw_label_tf.selectable = false;
+			swhw_label_tf.mouseEnabled = false;
+			_btm_bar.addChild(swhw_label_tf);
+			
 			_swhw_tf = new TextField;
-			_swhw_tf.defaultTextFormat = _label_format;
+			_swhw_tf.defaultTextFormat = _data_format;
 			_swhw_tf.autoSize = TextFieldAutoSize.LEFT;
-			_swhw_tf.x = 10;
-			_swhw_tf.y = _LOWER_Y;
+			_swhw_tf.x = swhw_label_tf.x + 31;
+			_swhw_tf.y = swhw_label_tf.y;
 			_swhw_tf.selectable = false;
 			_swhw_tf.mouseEnabled = false;
 			_btm_bar.addChild(_swhw_tf);
@@ -598,8 +632,9 @@ package away3d.debug
 			// Only redraw polycount if there is a  view available
 			// or they won't have been calculated properly
 			if (_views.length > 0) {
-				_poly_tf.text = _rfaces.toString().concat(' / ', _tfaces);
-				
+//				_poly_tf.text = _rfaces.toString().concat(' / ', _tfaces); // TODO: Total faces not yet available in 4.x
+				_poly_tf.text = _rfaces + "";
+
 				// Plot rendered faces
 				dia_y = _dia_bmp.height - Math.floor(_rfaces/_tfaces * _dia_bmp.height);
 				_dia_bmp.setPixel32(1, dia_y, _POLY_COL+0xff000000);
@@ -609,13 +644,15 @@ package away3d.debug
 			}
 			
 			// Show software (SW) or hardware (HW)
-			_swhw_tf.text = "?";
-			if (stage &&
-					Stage3DManager.getInstance(stage) &&
-					Stage3DManager.getInstance(stage).getStage3DProxy(0) &&
-					Stage3DManager.getInstance(stage).getStage3DProxy(0).context3D)
-			{
-				_swhw_tf.text = Stage3DManager.getInstance(stage).getStage3DProxy(0).context3D.driverInfo	== "Software" ? "SW" : "HW";
+			if (!_showing_driv_info) {
+				if (_views && _views.length && _views[0].renderer.stage3DProxy && _views[0].renderer.stage3DProxy.context3D) {
+					var di : String = _views[0].renderer.stage3DProxy.context3D.driverInfo;
+					_swhw_tf.text = di.substr(0, di.indexOf(' '));
+					_showing_driv_info = true;
+				}
+				else {
+					_swhw_tf.text = 'n/a (no view)';
+				}
 			}
 			
 			// Plot current framerate

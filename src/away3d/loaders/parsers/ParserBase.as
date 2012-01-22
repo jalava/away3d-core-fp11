@@ -8,7 +8,9 @@ package away3d.loaders.parsers
 	import away3d.library.assets.IAsset;
 	import away3d.loaders.misc.ResourceDependency;
 	import away3d.loaders.parsers.data.DefaultBitmapData;
-
+	import away3d.loaders.parsers.utils.ParserUtil;
+	import away3d.tools.utils.TextureUtils;
+	
 	import flash.display.BitmapData;
 	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
@@ -41,11 +43,21 @@ package away3d.loaders.parsers
 	 */
 	public class ParserBase extends EventDispatcher
 	{
+		arcane var _fileName:String;
 		protected var _dataFormat : String;
-		protected var _byteData : ByteArray;
-		protected var _textData : String;
+		protected var _data : *;
 		protected var _frameLimit : Number;
 		protected var _lastFrameTime : Number;
+		
+		protected function getTextData():String
+		{
+			return ParserUtil.toString(_data);
+		}
+		
+		protected function getByteData():ByteArray
+		{
+			return ParserUtil.toByteArray(_data);
+		}
 		
 		private var _dependencies : Vector.<ResourceDependency>;
 		private var _parsingPaused : Boolean;
@@ -89,8 +101,8 @@ package away3d.loaders.parsers
 		 */
 		public function isBitmapDataValid(bitmapData: BitmapData) : Boolean
 		{
-			var isValid:Boolean = DefaultBitmapData.isBitmapDataValid(bitmapData);
-			if(!isValid) trace(">> bitmap loaded is not having power of 2 dimensions or is higher than 4096");
+			var isValid:Boolean = TextureUtils.isBitmapDataValid(bitmapData);
+			if(!isValid) trace(">> Bitmap loaded is not having power of 2 dimensions or is higher than 2048");
 			
 			return isValid;
 		}
@@ -126,44 +138,18 @@ package away3d.loaders.parsers
 		}
 		
 		/**
-		 * Parse byte array (possibly containing plain text) asynchronously, meaning that
+		 * Parse data (possibly containing bytearry, plain text or BitmapAsset) asynchronously, meaning that
 		 * the parser will periodically stop parsing so that the AVM may proceed to the
 		 * next frame.
 		 *
-		 * @param bytes The byte array in which the loaded data resides.
+		 * @param data The untyped data object in which the loaded data resides.
 		 * @param frameLimit number of milliseconds of parsing allowed per frame. The
 		 * actual time spent on a frame can exceed this number since time-checks can
 		 * only be performed between logical sections of the parsing procedure.
 		 */
-		public function parseBytesAsync(bytes : ByteArray, frameLimit : Number = 30) : void
+		public function parseAsync(data : *, frameLimit : Number = 30) : void
 		{
-			if (_dataFormat == ParserDataFormat.BINARY)
-				_byteData = bytes;
-			else if (_dataFormat == ParserDataFormat.PLAIN_TEXT)
-				_textData = bytes.readUTFBytes(bytes.bytesAvailable);
-			
-			startParsing(frameLimit);
-		}
-		
-		/**
-		 * Parse plaintext string asynchronously, meaning that the parser will periodically
-		 * stop parsing so that the AVM may proceed to the next frame. If this parser
-		 * requires binary data, an error will be thrown.
-		 *
-		 * @param str Text data used for parsing.
-		 * @param frameLimit number of milliseconds of parsing allowed per frame. The
-		 * actual time spent on a frame can exceed this number since time-checks can
-		 * only be performed between logical sections of the parsing procedure.
-		 */
-		
-		
-		public function parseTextAsync(str : String, frameLimit : Number = 30) : void
-		{
-			if (_dataFormat == ParserDataFormat.PLAIN_TEXT)
-				_textData = str;
-			else if (_dataFormat == ParserDataFormat.BINARY) {
-				// TODO: Throw error when trying to parse text with binary parser
-			}
+			_data = data;
 			
 			startParsing(frameLimit);
 		}
@@ -330,8 +316,6 @@ package away3d.loaders.parsers
 			_timer = new Timer(_frameLimit, 0);
 			_timer.addEventListener(TimerEvent.TIMER, onInterval);
 			_timer.start();
-			// synchronously right away
-			onInterval();
 		}
 		
 		

@@ -42,6 +42,15 @@ package away3d.lights
 			_attenuationIndices = new Dictionary(true);
 		}
 
+
+		arcane override function cleanCompilationData() : void
+		{
+			super.cleanCompilationData();
+			_attenuationRegister = null;
+			_vertexPosReg = null;
+			_varyingReg = null;
+		}
+
 		/**
 		 * The maximum distance of the light's reach.
 		 */
@@ -127,7 +136,7 @@ package away3d.lights
 
 			m.copyFrom(renderable.sceneTransform);
 			m.append(inverseSceneTransform);
-			m.copyRowTo(3, _pos);
+			m.copyColumnTo(3, _pos);
 
 			var v1 : Vector3D = m.deltaTransformVector(bounds.min);
 			var v2 : Vector3D = m.deltaTransformVector(bounds.max);

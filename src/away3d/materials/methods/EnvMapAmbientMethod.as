@@ -32,6 +32,13 @@ package away3d.materials.methods
 			_needsNormals = true;
 		}
 
+
+		arcane override function reset() : void
+		{
+			super.reset();
+			_cubeMapIndex = -1;
+		}
+
 		/**
 		 * @inheritDoc
 		 */
@@ -88,7 +95,7 @@ package away3d.materials.methods
 			var cubeMapReg : ShaderRegisterElement = regCache.getFreeTextureReg();
 			_cubeMapIndex = cubeMapReg.index;
 
-			code += "tex " + targetReg + ", " + _normalFragmentReg + ", " + cubeMapReg + " <cube,linear,clamp>\n";
+			code += "tex " + targetReg + ", " + _normalFragmentReg + ", " + cubeMapReg + " <cube,linear,miplinear,clamp>\n";
 
 			_ambientInputRegister = regCache.getFreeFragmentConstant();
 			_ambientInputIndex = _ambientInputRegister.index;

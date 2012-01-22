@@ -13,7 +13,6 @@ package away3d.materials.passes
 	import flash.display3D.Context3DVertexBufferFormat;
 	import flash.display3D.textures.Texture;
 	import flash.geom.Matrix3D;
-	import flash.geom.Vector3D;
 	import flash.utils.Dictionary;
 
 	use namespace arcane;
@@ -39,17 +38,18 @@ package away3d.materials.passes
 		 */
 		public function SingleObjectDepthPass(textureSize : uint = 512, polyOffset : Number = 15)
 		{
-			super();
+			super(true);
+			_listensForDispose = new Vector.<Boolean>(8, true);
 			_textureSize = textureSize;
 			_numUsedStreams = 2;
-			_numUsedVertexConstants = 6;
+			_numUsedVertexConstants = 7;
 			_lightPosData = new Vector.<Number>(8, true);
 			_animatableAttributes = ["va0", "va1"];
 			_targetRegisters = ["vt0", "vt1"];
 			_polyOffset = Vector.<Number>([polyOffset, 0, 0, 0]);
 			_enc = Vector.<Number>([	1.0, 255.0, 65025.0, 16581375.0,
 										1.0 / 255.0,1.0 / 255.0,1.0 / 255.0,0.0
-			]);
+									]);
 		}
 
 		/**
@@ -60,7 +60,7 @@ package away3d.materials.passes
 			if (_textures) {
 				for (var i : uint = 0; i < _textures.length; ++i) {
 					for each(var vec : Vector.<Texture> in _textures[i]) {
-						for (var j : uint = 0; j < vec.length; ++i) {
+						for (var j : uint = 0; j < vec.length; ++j) {
 							vec[j].dispose();
 						}
 					}
@@ -179,9 +179,6 @@ package away3d.materials.passes
 			for (i = 0; i < len; ++i) {
 				// local position = enough
 				light = _lights[i];
-//				posMult = light.positionBasedMultiplier;
-//				lightPos = renderable.inverseSceneTransform.transformVector(light.scenePosition);
-//				lightDir = renderable.inverseSceneTransform.deltaTransformVector(light.sceneDirection);
 
 				matrix = light.getObjectProjectionMatrix(renderable, _projections[renderable][i]);
 
@@ -189,7 +186,7 @@ package away3d.materials.passes
 				_textures[contextIndex][renderable][i] ||= context.createTexture(_textureSize, _textureSize, Context3DTextureFormat.BGRA, true);
 				j = 0;
 
-				context.setRenderToTexture(_textures[contextIndex][renderable][i], true, 0, 0);
+				stage3DProxy.setRenderTarget(_textures[contextIndex][renderable][i], true);
 				context.clear(1.0, 1.0, 1.0);
 
 				context.setProgramConstantsFromMatrix(Context3DProgramType.VERTEX, 0, matrix, true);
@@ -231,7 +228,7 @@ package away3d.materials.passes
 		/**
 		 * @inheritDoc
 		 */
-		override protected function updateProgram(stage3DProxy : Stage3DProxy, polyOffsetReg : String = null) : void
+		override arcane function updateProgram(stage3DProxy : Stage3DProxy, polyOffsetReg : String = null) : void
 		{
 			super.updateProgram(stage3DProxy, "vc6.x");
 		}

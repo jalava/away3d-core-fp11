@@ -157,14 +157,16 @@ package away3d.primitives
 		override public function pushModelViewProjection(camera : Camera3D) : void
 		{
 			var size : Number = camera.lens.far / Math.sqrt(3);
-			if (++_mvpIndex == _stackLen++)
+			if (++_mvpIndex == _stackLen) {
 				_mvpTransformStack[_mvpIndex] = new Matrix3D();
+				++_stackLen;
+			}
 
 			var mvp : Matrix3D = _mvpTransformStack[_mvpIndex];
 			mvp.identity();
 			mvp.appendScale(size, size, size);
 			mvp.appendTranslation(camera.x, camera.y, camera.z);
-			mvp.append(camera.viewProjection);
+			mvp.append(camera.renderToTextureProjection);
 		}
 
 		/**
@@ -245,6 +247,11 @@ package away3d.primitives
 		public function get uvTransform() : Matrix
 		{
 			return _uvTransform;
+		}
+
+		public function getSecondaryUVBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
+		{
+			return null;
 		}
 	}
 }

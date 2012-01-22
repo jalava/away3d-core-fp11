@@ -195,6 +195,11 @@ package away3d.lights
 
 		}
 
+		arcane function cleanCompilationData() : void
+		{
+			_fragmentDirReg = null;
+		}
+
 		arcane function get positionBased() : Boolean
 		{
 			return false;
@@ -203,6 +208,11 @@ package away3d.lights
 		public function get shadowMapper() : ShadowMapperBase
 		{
 			return _shadowMapper;
+		}
+
+		public function set shadowMapper(value : ShadowMapperBase) : void
+		{
+			_shadowMapper = value;
 		}
 	}
 }

@@ -176,6 +176,13 @@ package away3d.materials.methods
 			_baseDiffuseMethod.reset();
 		}
 
+
+		arcane override function cleanCompilationData() : void
+		{
+			super.cleanCompilationData();
+			_baseDiffuseMethod.cleanCompilationData();
+		}
+
 		/**
 		 * @inheritDoc
 		 */
@@ -272,11 +279,6 @@ package away3d.materials.methods
 		/**
 		 * @inheritDoc
 		 */
-		override arcane function get globalPosVertexReg() : ShaderRegisterElement
-		{
-			return _globalPosVertexReg;
-		}
-
 		override arcane function set globalPosVertexReg(value : ShaderRegisterElement) : void
 		{
 			_baseDiffuseMethod.globalPosVertexReg = _globalPosVertexReg = value;
@@ -285,14 +287,17 @@ package away3d.materials.methods
 		/**
 		 * @inheritDoc
 		 */
-		override arcane function get UVFragmentReg() : ShaderRegisterElement
-		{
-			return _uvFragmentReg;
-		}
-
 		override arcane function set UVFragmentReg(value : ShaderRegisterElement) : void
 		{
 			_baseDiffuseMethod.UVFragmentReg = _uvFragmentReg = value;
+		}
+
+		/**
+		 * @inheritDoc
+		 */
+		override arcane function set secondaryUVFragmentReg(value : ShaderRegisterElement) : void
+		{
+			_baseDiffuseMethod.secondaryUVFragmentReg = _secondaryUVFragmentReg = value;
 		}
 
 		/**
