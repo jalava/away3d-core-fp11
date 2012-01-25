@@ -8,7 +8,6 @@ package away3d.core.base
 	import away3d.entities.Mesh;
 	import away3d.materials.MaterialBase;
 
-	import flash.display3D.Context3D;
 	import flash.display3D.IndexBuffer3D;
 	import flash.display3D.VertexBuffer3D;
 	import flash.geom.Matrix;
@@ -318,6 +317,11 @@ package away3d.core.base
 		public function getSecondaryUVBuffer(stage3DProxy : Stage3DProxy) : VertexBuffer3D
 		{
 			return _subGeometry.getSecondaryUVBuffer(stage3DProxy);
+		}
+
+		public function dispose() : void
+		{
+			material = null;
 		}
 	}
 }

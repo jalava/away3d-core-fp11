@@ -62,6 +62,9 @@ package away3d.animators
 		 */
 		override protected function updateAnimation(realDT : Number, scaledDT : Number) : void
 		{
+			// TODO: not used
+			realDT = realDT;
+			
 			var poses : Vector.<Geometry> = _target.poses;
 			var weights : Vector.<Number> = _target.weights;
 
@@ -83,20 +86,19 @@ package away3d.animators
 		{
 			return _sequences[sequenceName];
 		}
-
-        /**
-		 * Retrieves all sequences names.
-		 * @private
-		 */
+		/**
+		* Retrieves all sequences names.
+		* @private
+		*/
 		arcane function get sequencesNames() : Array
 		{
 			var seqsNames:Array = [];
 			for(var key:String in _sequences)
 				seqsNames.push(key);
-
+			 
 			return seqsNames;
 		}
-
+		
 		/**
 		 * Retrieves all the sequences
 		 * @private
@@ -106,9 +108,8 @@ package away3d.animators
 			var seqs:Array = [];
 			for(var key:String in _sequences)
 				seqs.push(_sequences[key]);
-
+			
 			return seqs;
 		}
-
 	}
 }
